@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lari_yuk/pages/login_page.dart';
-import 'package:lari_yuk/pages/splash_screen.dart';
+import 'package:lari_yuk/pages/register_page.dart'; 
 
 void main() {
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -16,10 +15,10 @@ class MyApp extends StatelessWidget {
       title: 'Lari Yuk',
       theme: ThemeData(primarySwatch: Colors.blue),
       debugShowCheckedModeBanner: false,
-       routes: {
-        '/' : (context) => SplashScreen(),
-        '/login' : (context) => LoginPage(),
-      } ,
+      routes: {
+        '/': (context) => LoginPage(),
+        '/register': (context) => const RegisterPage(), 
+      },
     );
   }
 }
