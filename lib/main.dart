@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lari_yuk/pages/login_page.dart';
+import 'pages/register_page.dart'; 
 import 'pages/splash_screen.dart';
 
 void main() {
@@ -17,7 +18,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
        routes: {
         '/' : (context) => SplashScreen(),
-        '/login' : (context) => LoginPage()
+        '/login' : (context) => LoginPage(),
+        '/register' : (context) => RegisterPage(),
       } ,
     );
   }
