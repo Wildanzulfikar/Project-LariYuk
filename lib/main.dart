@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lari_yuk/pages/login_page.dart';
+import 'pages/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +16,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue),
       debugShowCheckedModeBanner: false,
        routes: {
-        '/' : (context) => LoginPage(),
+        '/' : (context) => SplashScreen(),
+        '/login' : (context) => LoginPage()
       } ,
     );
   }
