@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lari_yuk/pages/dashboard_page.dart';
 import 'package:lari_yuk/pages/login_page.dart';
 import 'pages/register_page.dart'; 
 import 'pages/splash_screen.dart';
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
         '/' : (context) => SplashScreen(),
         '/login' : (context) => LoginPage(),
         '/register' : (context) => RegisterPage(),
+        '/dashboard' : (context) => DashboardPage(),
       } ,
     );
   }
