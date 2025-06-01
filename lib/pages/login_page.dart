@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lari_yuk/pages/dashboard_page.dart';
 import 'package:lari_yuk/theme.dart';
 
 class LoginPage extends StatelessWidget {
@@ -6,8 +7,7 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Widget Input Email
-
+  
     Widget emailInput() {
       return Container(
         child: Column(
@@ -47,7 +47,6 @@ class LoginPage extends StatelessWidget {
       );
     }
 
-    // Widget Password
     Widget passwordInput() {
       bool obscureText = true;
       return Container(
@@ -125,7 +124,7 @@ class LoginPage extends StatelessWidget {
     Widget submitButton() {
       return GestureDetector(
         onTap: () {
-          // Add your login logic here
+           Navigator.push(context, MaterialPageRoute(builder: (context) => DashboardPage()));
         },
         child: Container(
           height: 50,
@@ -184,11 +183,7 @@ class LoginPage extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.network(
-                'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
-                height: 24,
-                width: 24,
-              ),
+              Image.asset('assets/google.png', width: 24, height: 24,),
               SizedBox(width: 8.0),
               Text(
                 'Lanjutkan dengan Google',

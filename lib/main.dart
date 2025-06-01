@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lari_yuk/pages/dashboard_page.dart';
 import 'package:lari_yuk/pages/login_page.dart';
 
 void main() {
@@ -16,6 +17,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
        routes: {
         '/' : (context) => LoginPage(),
+        '/dashboard' : (context) => DashboardPage(),
       } ,
     );
   }
