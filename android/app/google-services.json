@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "694986775020",
+    "project_id": "runtrackerapp-b2ba8",
+    "storage_bucket": "runtrackerapp-b2ba8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:694986775020:android:13305b9e4a22a500bc88c9",
+        "android_client_info": {
+          "package_name": "com.example.lari_yuk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnbfRclIs3yoPwJWHjWylDwhORgRW1dDA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
