@@ -23,9 +23,14 @@ class DashboardPage extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        CircleAvatar(
-                          radius: 24,
-                          backgroundImage: AssetImage('assets/photomoki.png'),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/edit-profile');
+                          },
+                          child: CircleAvatar(
+                            radius: 24,
+                            backgroundImage: AssetImage('assets/photomoki.png'),
+                          ),
                         ),
                         SizedBox(width: 16.0),
                         Column(
