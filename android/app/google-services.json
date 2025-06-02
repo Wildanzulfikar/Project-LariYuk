@@ -12,7 +12,20 @@
           "package_name": "com.example.lari_yuk"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "694986775020-i9i29qvh70hmensg7obsniq5be7p6qpm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.lari_yuk",
+            "certificate_hash": "946a3db589678e65cebae668da90ffcf29202165"
+          }
+        },
+        {
+          "client_id": "694986775020-sb9521l449c8qd9jroj3mf61kkigifjd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDnbfRclIs3yoPwJWHjWylDwhORgRW1dDA"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "694986775020-sb9521l449c8qd9jroj3mf61kkigifjd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "694986775020-5k86ist5khnvpfa0acfv3fqn8c09g2h7.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lariYuk"
+              }
+            }
+          ]
         }
       }
     }
