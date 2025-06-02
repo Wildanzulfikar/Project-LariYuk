@@ -3,7 +3,8 @@ import 'package:lari_yuk/pages/dashboard_page.dart';
 import 'package:lari_yuk/pages/login_page.dart';
 import 'package:lari_yuk/pages/challenge_page.dart';
 import 'package:lari_yuk/pages/detailChallenge_page.dart';
-import 'package:lari_yuk/pages/detail_page.dart'; 
+import 'package:lari_yuk/pages/detail_page.dart';
+import 'package:lari_yuk/pages/runningStart_page.dart'; // Sudah benar
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +25,8 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) => DashboardPage(),
         '/challenge': (context) => ChallengePage(),
         '/detail-challenge': (context) => DetailChallengePage(),
-        '/detail-page': (context) => DetailPage(), 
+        '/detail-page': (context) => DetailPage(),
+        '/running-start': (context) => RunningStartPage(), // Ganti ini
       },
     );
   }
