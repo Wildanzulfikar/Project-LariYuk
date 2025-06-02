@@ -262,9 +262,18 @@ class ChallengePage extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        currentIndex: 1, // Ubah ke 1 untuk menandai Challenge aktif
+        currentIndex: 1, // 1 for Challenge
         onTap: (index) {
-          // Tambahkan navigasi jika diperlukan
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/challenge');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/running-start');
+          } else if (index == 3) {
+            // Add your profile route if needed
+            // Navigator.pushReplacementNamed(context, '/profile');
+          }
         },
       ),
     );

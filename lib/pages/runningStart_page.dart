@@ -7,7 +7,6 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:lari_yuk/pages/afterRun_page.dart';
 
 class RunningStartPage extends StatefulWidget {
   const RunningStartPage({Key? key}) : super(key: key);
@@ -483,12 +482,17 @@ class _RunningStartPageState extends State<RunningStartPage> {
           BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        currentIndex: 2,
+        currentIndex: 2, // 2 for Start
         onTap: (index) {
           if (index == 0) {
-            Navigator.pushNamed(context, '/dashboard');
+            Navigator.pushReplacementNamed(context, '/dashboard');
           } else if (index == 1) {
-            Navigator.pushNamed(context, '/challenge');
+            Navigator.pushReplacementNamed(context, '/challenge');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/running-start');
+          } else if (index == 3) {
+            // Add your profile route if needed
+            // Navigator.pushReplacementNamed(context, '/profile');
           }
         },
       ),

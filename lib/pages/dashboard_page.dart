@@ -353,10 +353,16 @@ class DashboardPage extends StatelessWidget {
         ],
         currentIndex: 0,
         onTap: (index) {
-          if (index == 1) {
-            Navigator.pushNamed(context, '/challenge');
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/challenge');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/running-start');
+          } else if (index == 3) {
+            // Add your profile route if needed
+            // Navigator.pushReplacementNamed(context, '/profile');
           }
-          // Tambahkan navigasi lain jika diperlukan
         },
       ),
     );
