@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
         '/challenge': (context) => ChallengePage(),
         '/detail-challenge': (context) => DetailChallengePage(),
         '/detail-page': (context) => DetailPage(),
-        '/running-start': (context) => RunningStartPage(), // Ganti ini
+        '/running-start': (context) => RunningStartPage(), 
       },
     );
   }

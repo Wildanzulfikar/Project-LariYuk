@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:lari_yuk/pages/afterRun_page.dart';
 
 class RunningStartPage extends StatefulWidget {
   const RunningStartPage({Key? key}) : super(key: key);
@@ -75,6 +76,12 @@ class _RunningStartPageState extends State<RunningStartPage> {
   void _stopRun() {
     _timer?.cancel();
     _positionStream?.cancel();
+
+    final duration = _duration;
+    final distance = _distance;
+    final pace = _pace;
+    final temperature = _temperature;
+
     setState(() {
       _isRunning = false;
       _isPaused = false;
@@ -82,6 +89,18 @@ class _RunningStartPageState extends State<RunningStartPage> {
       _distance = 0.0;
       _routePoints.clear();
     });
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AfterRunPage(
+          duration: duration,
+          distance: distance,
+          pace: pace,
+          temperature: temperature,
+        ),
+      ),
+    );
   }
 
   Future<void> _determinePosition() async {
@@ -516,5 +535,264 @@ class _RunningStartPageState extends State<RunningStartPage> {
     final m = twoDigits(d.inMinutes.remainder(60));
     final s = twoDigits(d.inSeconds.remainder(60));
     return h == "00" ? "$m:$s" : "$h:$m:$s";
+  }
+}
+
+class AfterRunPage extends StatefulWidget {
+  final Duration duration;
+  final double distance;
+  final String pace;
+  final int temperature;
+
+  const AfterRunPage({
+    Key? key,
+    required this.duration,
+    required this.distance,
+    required this.pace,
+    required this.temperature,
+  }) : super(key: key);
+
+  @override
+  State<AfterRunPage> createState() => _AfterRunPageState();
+}
+
+class _AfterRunPageState extends State<AfterRunPage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  String _formatDuration(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final h = twoDigits(d.inHours);
+    final m = twoDigits(d.inMinutes.remainder(60));
+    final s = twoDigits(d.inSeconds.remainder(60));
+    return h == "00" ? "$m:$s" : "$h:$m:$s";
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0, end: -24).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7E6),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Floating Medal Animation
+              AnimatedBuilder(
+                animation: _animation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, _animation.value),
+                    child: child,
+                  );
+                },
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Medal shadow
+                    Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            Color(0xFFFFE082),
+                            Color(0xFFFFD36B),
+                            Color(0x00FFD36B),
+                          ],
+                          stops: [0.4, 0.8, 1.0],
+                        ),
+                      ),
+                    ),
+                    // Medal main
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFFFD36B),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFFFFD36B).withOpacity(0.5),
+                            blurRadius: 16,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.emoji_events,
+                          color: Color(0xFFFFB300),
+                          size: 48,
+                        ),
+                      ),
+                    ),
+                    // Ribbon
+                    Positioned(
+                      bottom: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 18,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF7B4397),
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(8),
+                                bottomRight: Radius.circular(4),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 18,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF7B4397),
+                              borderRadius: BorderRadius.only(
+                                bottomLeft: Radius.circular(4),
+                                bottomRight: Radius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Congratulations!',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF222B45),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text(
+                  'You have completed your run! Great job, keep going!',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    color: Colors.black54,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Statistics (no card, just floating)
+              _statRow(
+                icon: Icons.timer,
+                label: 'Duration',
+                value: _formatDuration(widget.duration),
+              ),
+              _statRow(
+                icon: Icons.directions_run,
+                label: 'Distance (KM)',
+                value: widget.distance.toStringAsFixed(2),
+              ),
+              _statRow(
+                icon: Icons.speed,
+                label: 'Pace',
+                value: widget.pace,
+              ),
+              _statRow(
+                icon: Icons.thermostat,
+                label: 'Temperature',
+                value: '${widget.temperature}°',
+              ),
+              const SizedBox(height: 36),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF6A4D),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: 4,
+                      shadowColor: Colors.orangeAccent.withOpacity(0.3),
+                    ),
+                    child: Text(
+                      'Back to Dashboard',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32),
+      child: Row(
+        children: [
+          Icon(icon, color: Color(0xFFFFB300), size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF7B4397),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
