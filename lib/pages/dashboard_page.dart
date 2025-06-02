@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lari_yuk/theme.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -8,7 +7,7 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor3,
+      backgroundColor: Colors.grey[200],
       resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Container(
@@ -33,16 +32,18 @@ class DashboardPage extends StatelessWidget {
                         children: [
                           Text(
                             'Welcome 🙌',
-                            style: secondaryTextStyle.copyWith(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
+                              color: Colors.grey,
                             ),
                           ),
                           Text(
                             'Wildan Zulfikar',
-                            style: blackTextStyle.copyWith(
+                            style: TextStyle(
                               fontSize: 16.0,
                               fontWeight: FontWeight.w500,
+                              color: Colors.black,
                             ),
                           ),
                         ],
@@ -53,7 +54,7 @@ class DashboardPage extends StatelessWidget {
                     onPressed: () {},
                     icon: Icon(Icons.notifications_none_outlined),
                     iconSize: 28,
-                    color: secondaryColor,
+                    color: Colors.grey,
                   ),
                 ],
               ),
@@ -125,7 +126,7 @@ class DashboardPage extends StatelessWidget {
                               child: Text(
                                 'Done',
                                 style: GoogleFonts.plusJakartaSans(
-                                  color: blackColor,
+                                  color: Colors.black,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -146,7 +147,7 @@ class DashboardPage extends StatelessWidget {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 24.0,
                       fontWeight: FontWeight.w600,
-                      color: blackColor,
+                      color: Colors.black,
                     ),
                   ),
                   Row(
@@ -154,18 +155,197 @@ class DashboardPage extends StatelessWidget {
                     children: [
                       Text(
                         'See All',
-                        style: secondaryTextStyle.copyWith(fontSize: 16.0),
+                        style: TextStyle(fontSize: 16.0, color: Colors.grey),
                       ),
-                      IconButton(onPressed: () {
-
-                      }, icon: Icon(Icons.arrow_forward_ios_rounded), iconSize: 12.0,)
+                      IconButton(
+                        onPressed: () {},
+                        icon: Icon(Icons.arrow_forward_ios_rounded),
+                        iconSize: 12.0,
+                      ),
                     ],
                   ),
                 ],
               ),
+              SizedBox(height: 16.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Card(
+                      color: Color(0xffFF6A00),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          spacing: 7,
+                          children: [
+                            Icon(
+                              Icons.directions_walk,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                            SizedBox(width: 8.0),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '900',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  'Steps',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16.0),
+                  Expanded(
+                    child: Card(
+                      color: Color(0xffFF6A00),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Row(
+                          spacing: 7,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.local_fire_department,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                            SizedBox(width: 8.0),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '150',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  'Kalori',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.0),
+              Text(
+                "Perkiraan Cuaca",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+              ),
+              SizedBox(height: 8.0),
+              Card(
+                color: Color(0xff2196F3),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.0),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.cloud, color: Colors.white, size: 60),
+                          SizedBox(width: 16.0),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Malam | Ciracas',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Text(
+                            '34°C',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 24,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Hujan Ringan',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: Color(0xffFF6A00),
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        selectedLabelStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_run),
+            label: 'Challenge',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+        currentIndex: 0,
+        onTap: (index) {},
       ),
     );
   }
