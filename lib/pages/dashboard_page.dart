@@ -1,338 +1,418 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:lari_yuk/pages/notification_page.dart';
 
-class DashboardPage extends StatelessWidget {
+
+
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  int currentIndex = 0;
+
+  String weatherDescription = '';
+  double temperature = 0;
+  String weatherLocation = 'Ciracas';
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchWeather();
+  }
+
+  Future<void> fetchWeather() async {
+    try {
+      // Ganti dengan API key kamu sendiri dari https://openweathermap.org/api
+      const apiKey = 'f27dcb2f2fa385362cda3d5bc1ccb497';
+      const city = 'Ciracas'; // bisa diganti sesuai lokasi
+      final url = Uri.parse(
+          'https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey&units=metric&lang=id');
+
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          temperature = data['main']['temp'].toDouble();
+          weatherDescription = data['weather'][0]['description'];
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          weatherDescription = 'Gagal mengambil data cuaca';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        weatherDescription = 'Error saat mengambil data';
+        isLoading = false;
+      });
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
       resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 28.0, vertical: 12.0),
-            padding: EdgeInsets.only(top: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/edit-profile');
-                          },
-                          child: CircleAvatar(
-                            radius: 24,
-                            backgroundImage: AssetImage('assets/photomoki.png'),
-                          ),
-                        ),
-                        SizedBox(width: 16.0),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome 🙌',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            Text(
-                              'Wildan Zulfikar',
-                              style: TextStyle(
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(Icons.notifications_none_outlined),
-                      iconSize: 28,
-                      color: Colors.grey,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 20.0),
-                Padding(
-                  padding: EdgeInsets.all(0),
-                  child: Card(
-                    color: Color(0xffFF6A00),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(24.0),
-                      child: Column(
+          padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundImage: AssetImage('assets/photomoki.png'),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.directions_run,
-                                    color: Colors.white,
-                                    size: 30,
-                                  ),
-                                  SizedBox(width: 8.0),
-                                  Text(
-                                    'Daily Challenge',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 20,
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              IconButton(
-                                onPressed: () {},
-                                icon: Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 4),
                           Text(
-                            'Sprint for 30 seconds. Repeat this\ninterval 5 times',
+                            'Welcome 🙌',
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 15,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
                             ),
                           ),
-                          SizedBox(height: 16.0),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Done',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            'Wildan Zulfikar',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
                           ),
                         ],
                       ),
-                    ),
+                    ],
                   ),
+                  IconButton(
+                    onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => NotificationPage()),
+                    );
+                  },
+                    icon: const Icon(Icons.notifications_none_outlined),
+                    iconSize: 28,
+                    color: Colors.grey[700],
+                    tooltip: 'Notifications',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Daily Challenge Card
+              Card(
+                color: const Color(0xffFF6A00),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                SizedBox(height: 10.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Today Stats",
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24.0,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'See All',
-                          style: TextStyle(fontSize: 16.0, color: Colors.grey),
-                        ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: Icon(Icons.arrow_forward_ios_rounded),
-                          iconSize: 12.0,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16.0),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Card(
-                        color: Color(0xffFF6A00),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            spacing: 7,
-                            children: [
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: const [
                               Icon(
-                                Icons.directions_walk,
+                                Icons.directions_run,
                                 color: Colors.white,
-                                size: 40,
+                                size: 30,
                               ),
-                              SizedBox(width: 8.0),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '900',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Steps',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 14,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              SizedBox(width: 8),
                             ],
+                          ),
+                          Text(
+                            'Daily Challenge',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 20,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text("Dismiss Challenge"),
+                                  content: Text("Kartu challenge disembunyikan."),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text("OK"),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.close),
+                            color: Colors.white,
+                            iconSize: 24,
+                            tooltip: 'Dismiss',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sprint for 30 seconds. Repeat this\ninterval 5 times',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Good job! Kamu menyelesaikan challenge")),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          ),
+                          child: Text(
+                            'Done',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Today Stats Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Today Stats",
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
                     ),
-                    SizedBox(width: 16.0),
-                    Expanded(
-                      child: Card(
-                        color: Color(0xffFF6A00),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        'See All',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          color: Colors.grey[600],
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Row(
-                            spacing: 7,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.local_fire_department,
-                                color: Colors.white,
-                                size: 40,
-                              ),
-                              SizedBox(width: 8.0),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '150',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Menampilkan statistik lengkap...")),
+                          );
+                        },
+                        icon: const Icon(Icons.arrow_forward_ios_rounded),
+                        iconSize: 14,
+                        color: Colors.grey[600],
+                        tooltip: 'See All Stats',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Today Stats Cards
+              Row(
+                children: [
+                  Expanded(
+                    child: Card(
+                      color: const Color(0xffFF6A00),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.directions_walk,
+                              color: Colors.white,
+                              size: 40,
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '900',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
                                   ),
-                                  Text(
-                                    'Kalori',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 14,
-                                      color: Colors.white,
-                                    ),
+                                ),
+                                Text(
+                                  'Steps',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: Colors.white70,
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(height: 16.0),
-                Text(
-                  "Perkiraan Cuaca",
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 24.0,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
                   ),
-                ),
-                SizedBox(height: 8.0),
-                Card(
-                  color: Color(0xff2196F3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.0),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Row(
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Card(
+                      color: const Color(0xffFF6A00),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.cloud, color: Colors.white, size: 60),
-                            SizedBox(width: 16.0),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Malam | Ciracas',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 16,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            const Icon(
+                              Icons.local_fire_department,
+                              color: Colors.white,
+                              size: 40,
                             ),
-                            Text(
-                              '34°C',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 24,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              'Hujan Ringan',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 14,
-                                color: Colors.white,
-                              ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '150',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  'Kalori',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Weather Section
+              Text(
+                "Perkiraan Cuaca",
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              Card(
+                color: const Color(0xff2196F3),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          ),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            // Icon cuaca sederhana, bisa dikembangkan dengan mapping icon dari API
+                            const Icon(Icons.cloud, color: Colors.white, size: 60),
+                            const SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Malam | $weatherLocation',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  '${temperature.toStringAsFixed(0)}°C',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 28,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  weatherDescription,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 14,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
-        selectedItemColor: Color(0xffFF6A00),
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: const Color(0xffFF6A00),
+        unselectedItemColor: Colors.grey[600],
         showUnselectedLabels: true,
         selectedLabelStyle: GoogleFonts.plusJakartaSans(
           fontSize: 12,
@@ -344,24 +424,20 @@ class DashboardPage extends StatelessWidget {
         ),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_run),
-            label: 'Challenge',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.directions_run), label: 'Challenge'),
           BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        currentIndex: 0,
+        currentIndex: currentIndex,
         onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/challenge');
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/running-start');
+          setState(() {
+            currentIndex = index;
+          });
+
+          if (index == 1) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: Text("Challenge Page")), body: Center(child: Text("Coming Soon")))));
           } else if (index == 3) {
-            // Add your profile route if needed
-            // Navigator.pushReplacementNamed(context, '/profile');
+            Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: Text("Profile Page")), body: Center(child: Text("Profile Wildan")))));
           }
         },
       ),
