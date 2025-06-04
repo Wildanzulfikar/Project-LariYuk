@@ -1,12 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lari_yuk/theme.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
-class DetailChallengePage extends StatelessWidget {
-  const DetailChallengePage({Key? key}) : super(key: key);
+class DetailChallengePage extends StatefulWidget {
+  DetailChallengePage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  State<DetailChallengePage> createState() => _DetailChallengePageState();
+}
+
+class _DetailChallengePageState extends State<DetailChallengePage> {
+  final ScreenshotController _contentScreenshotController = ScreenshotController();
+  int _selectedIndex = 1; // Default to 'Challenge'
+
+  void _onNavBarTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/dashboard');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/challenge');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/running-start');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
+    }
+  }
+
+  // Extract the Scaffold as a method for easy screenshotting
+  Widget _buildScaffold(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -28,16 +60,91 @@ class DetailChallengePage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.share, color: Colors.black, size: 24),
-            onPressed: () {},
+            onPressed: () async {
+              print('Share icon pressed');
+              final image = await _contentScreenshotController.capture(pixelRatio: 2.0);
+              print('Screenshot taken');
+              if (image == null) {
+                print('Image is null');
+                return;
+              }
+              showDialog(
+                context: context,
+                builder: (context) => DefaultTextStyle(
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.black,
+                    fontSize: 14,
+                  ),
+                  child: AlertDialog(
+                    title: const Text('Preview Screenshot'),
+                    content: Image.memory(image),
+                    actions: [
+                      TextButton(
+                        onPressed: () async {
+                          final directory = await getTemporaryDirectory();
+                          final imagePath = await File('${directory.path}/challenge_share.png').create();
+                          await imagePath.writeAsBytes(image);
+
+                          await Share.shareFiles(
+                            [imagePath.path],
+                            text: 'Check out my challenge progress! https://your-link.com',
+                          );
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text('Share'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Cancel'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: DefaultTextStyle(
-          style: GoogleFonts.plusJakartaSans(
-            color: Colors.black,
-            fontSize: 14,
+      body: _buildScaffoldContent(context),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xffFF6A00),
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        selectedLabelStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_run),
+            label: 'Challenge',
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onNavBarTapped,
+      ),
+    );
+  }
+
+  // Extract the content for screenshotting
+  Widget _buildScaffoldContent(BuildContext context) {
+    return SingleChildScrollView(
+      child: DefaultTextStyle(
+        style: GoogleFonts.plusJakartaSans(
+          color: Colors.black,
+          fontSize: 14,
+        ),
+        child: Screenshot(
+          controller: _contentScreenshotController,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -219,34 +326,11 @@ class DetailChallengePage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Color(0xffFF6A00),
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        selectedLabelStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-        ),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_run),
-            label: 'Challenge',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        currentIndex: 1, // Ubah ke 1 untuk menandai Challenge aktif
-        onTap: (index) {
-          // Tambahkan navigasi jika diperlukan
-        },
-      ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildScaffold(context);
   }
 }
