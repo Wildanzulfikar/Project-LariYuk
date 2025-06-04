@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:lari_yuk/pages/notification_page.dart';
+import 'ProfilePage.dart';
 
 
 
@@ -437,10 +438,14 @@ class _DashboardPageState extends State<DashboardPage> {
           if (index == 1) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: Text("Challenge Page")), body: Center(child: Text("Coming Soon")))));
           } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: Text("Profile Page")), body: Center(child: Text("Profile Wildan")))));
-          }
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => ProfilePage()),
+  );
+}
         },
       ),
     );
   }
 }
+
