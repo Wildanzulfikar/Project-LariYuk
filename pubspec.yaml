@@ -18,6 +18,8 @@ dependencies:
   google_sign_in: ^6.3.0
   http: ^1.4.0
   fl_chart: ^0.68.0
+  geolocator: ^14.0.1
+  geocoding: ^4.0.0
 
 dev_dependencies:
   flutter_test:
@@ -28,11 +30,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/logo.png
-    - assets/images/track1.png
-    - assets/images/track2.png
-    - assets/images/track3.jpg
-    - assets/google.jpg
+    - assets/
+    - assets/images/
 
   # To add assets to your application, add an assets section, like this:  
 
