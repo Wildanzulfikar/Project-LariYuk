@@ -5,8 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:lari_yuk/pages/notification_page.dart';
 import 'ProfilePage.dart';
 
-
-
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
