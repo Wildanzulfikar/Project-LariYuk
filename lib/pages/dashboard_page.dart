@@ -434,10 +434,23 @@ class _DashboardPageState extends State<DashboardPage> {
             currentIndex = index;
           });
 
-          if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: Text("Challenge Page")), body: Center(child: Text("Coming Soon")))));
-          } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: Text("Profile Page")), body: Center(child: Text("Profile Wildan")))));
+          switch (index) {
+            case 0:
+              // Navigate to Dashboard Page
+              Navigator.pushNamed(context, '/dashboard');
+              break;
+            case 1:
+              // Navigate to Challenge Page (using the available detail route as discussed)
+              Navigator.pushNamed(context, '/challenge-page');
+              break;
+            case 2:
+              // Navigate to Running Start (Maps) Page
+              Navigator.pushNamed(context, '/running-start');
+              break;
+            case 3:
+              // Navigate to Profile Page
+              Navigator.pushNamed(context, '/profile');
+              break;
           }
         },
       ),
