@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:lari_yuk/pages/notification_page.dart';
+import 'ProfilePage.dart';
 
 
 
@@ -457,3 +458,4 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
+
