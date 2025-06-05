@@ -29,19 +29,14 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/challenge',
       routes: {
-        '/': (context) => LoginPage(),
-        '/dashboard': (context) => DashboardPage(),
-        '/challenge': (context) => ChallengePage(),
-        '/detail-challenge': (context) => DetailChallengePage(),
-        '/detail-page': (context) => DetailPage(),
-        '/running-start': (context) => RunningStartPage(), 
-      },
-       routes: {
         '/' : (context) => SplashScreen(),
         '/login' : (context) => LoginPage(),
         '/register' : (context) => RegisterPage(),
         '/dashboard' : (context) => DashboardPage(),
-      } ,
+        '/detail-challenge': (context) => DetailChallengePage(),
+        '/detail-page': (context) => DetailPage(),
+        '/running-start': (context) => RunningStartPage(), 
+      },
     );
   }
 }

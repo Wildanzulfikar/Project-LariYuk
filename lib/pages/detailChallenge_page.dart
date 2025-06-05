@@ -85,8 +85,8 @@ class _DetailChallengePageState extends State<DetailChallengePage> {
                           final imagePath = await File('${directory.path}/challenge_share.png').create();
                           await imagePath.writeAsBytes(image);
 
-                          await Share.shareFiles(
-                            [imagePath.path],
+                          await Share.shareXFiles(
+                            [XFile(imagePath.path)],
                             text: 'Check out my challenge progress! https://your-link.com',
                           );
                           Navigator.of(context).pop();
