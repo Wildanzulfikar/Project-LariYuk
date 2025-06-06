@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:lari_yuk/pages/dashboard_page.dart'; // Import DashboardPage
+
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -95,7 +97,27 @@ class _ProfilePageState extends State<ProfilePage> {
               Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    // MODIFIED: Navigate to dashboard with slide-out animation
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder: (context, animation, secondaryAnimation) => DashboardPage(),
+                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            const begin = Offset(1.0, 0.0); // Start from right
+                            const end = Offset(0.0, 0.0); // End at center
+                            const curve = Curves.ease;
+
+                            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+                            return SlideTransition(
+                              position: animation.drive(tween),
+                              child: child,
+                            );
+                          },
+                        ),
+                      );
+                    },
                     child: const Icon(Icons.arrow_back_ios, size: 24),
                   ),
                   const SizedBox(width: 8),
@@ -280,8 +302,8 @@ class _ProfilePageState extends State<ProfilePage> {
             Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Colors.white)),
             Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))
           ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
