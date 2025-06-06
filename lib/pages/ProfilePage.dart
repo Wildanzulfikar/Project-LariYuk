@@ -244,8 +244,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
               // Chart
               Container(
-                height: 220,
-                padding: const EdgeInsets.all(12),
+                height: 270,
+                padding: const EdgeInsets.only(top: 25, left: 12, right: 12, bottom: 12),
                 decoration: BoxDecoration(
                   color: Colors.orange.shade100,
                   borderRadius: BorderRadius.circular(16),
