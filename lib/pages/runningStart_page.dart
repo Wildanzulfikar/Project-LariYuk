@@ -195,8 +195,8 @@ class _RunningStartPageState extends State<RunningStartPage> {
           Positioned.fill(
             child: FlutterMap(
               options: MapOptions(
-                center: _currentLocation ?? LatLng(-6.200000, 106.816666),
-                zoom: 16.0,
+                initialCenter: _currentLocation ?? LatLng(-6.200000, 106.816666),
+                initialZoom: 16.0,
               ),
               children: [
                 TileLayer(
