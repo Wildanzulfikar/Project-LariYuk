@@ -1,10 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:lari_yuk/pages/notification_page.dart';
-
-
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -18,24 +20,121 @@ class _DashboardPageState extends State<DashboardPage> {
 
   String weatherDescription = '';
   double temperature = 0;
-  String weatherLocation = 'Ciracas';
+  String weatherLocation = 'Loading...';
   bool isLoading = true;
+  String userName = 'Loading...';
+  String? profileImageUrl;
 
   @override
   void initState() {
     super.initState();
+    _getUserName();
     fetchWeather();
+  }
+
+  Future<void> _getUserName() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    print("USERLOGIN: ${user}");
+    if (user != null) {
+      setState(() {
+        userName = user.displayName ?? user.email?.split('@')[0] ?? 'User';
+        profileImageUrl = user.photoURL;
+      });
+    }
+  }
+
+  // Ambil Lokasi Terkini
+  Future<Position?> _getCurrentLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      setState(() {
+        weatherDescription = 'Layanan Lokasi Diaktifkan!';
+        isLoading = false;
+      });
+      return null;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          weatherDescription = 'Izin lokasi ditolak';
+          isLoading = false;
+        });
+        return null;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      setState(() {
+        weatherDescription = 'Izin lokasi ditolak permanen';
+        isLoading = false;
+      });
+      return null;
+    }
+
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+  }
+
+  Future<String?> _getCityFromCoordinates(
+    double latitude,
+    double longitude,
+  ) async {
+    try {
+      List<Placemark> placemark = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+      );
+      if (placemark.isNotEmpty) {
+        return placemark.first.locality ?? "Uknown Location";
+      }
+      return null;
+    } catch (e) {
+      print("Error Get City ${e}");
+      return null;
+    }
   }
 
   Future<void> fetchWeather() async {
     try {
-      // Ganti dengan API key kamu sendiri dari https://openweathermap.org/api
       const apiKey = 'f27dcb2f2fa385362cda3d5bc1ccb497';
-      const city = 'Ciracas'; // bisa diganti sesuai lokasi
-      final url = Uri.parse(
-          'https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$apiKey&units=metric&lang=id');
 
+      Position? position = await _getCurrentLocation();
+      if (position == null) {
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      String? city = await _getCityFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (city == null) {
+        setState(() {
+          weatherDescription = 'Gagal mendapatkan nama kota';
+          isLoading = false;
+        });
+        return;
+      }
+
+      setState(() {
+        weatherLocation = city;
+      });
+      final url = Uri.parse(
+        'https://api.openweathermap.org/data/2.5/weather?lat=${position.latitude}&lon=${position.longitude}&appid=$apiKey&units=metric&lang=id',
+      );
+      print('URL: $url');
       final response = await http.get(url);
+      print('Response: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -45,13 +144,15 @@ class _DashboardPageState extends State<DashboardPage> {
         });
       } else {
         setState(() {
-          weatherDescription = 'Gagal mengambil data cuaca';
+          weatherDescription =
+              'Gagal mengambil data cuaca: ${response.statusCode}';
           isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Error: $e\nStackTrace: $stackTrace');
       setState(() {
-        weatherDescription = 'Error saat mengambil data';
+        weatherDescription = 'Error saat mengambil data: $e';
         isLoading = false;
       });
     }
@@ -75,7 +176,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       CircleAvatar(
                         radius: 24,
-                        backgroundImage: AssetImage('assets/photomoki.png'),
+                        backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : AssetImage('assets/photomoki.png'),
                       ),
                       const SizedBox(width: 16),
                       Column(
@@ -90,7 +191,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                           ),
                           Text(
-                            'Wildan Zulfikar',
+                            userName,
                             style: GoogleFonts.plusJakartaSans(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -103,11 +204,13 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   IconButton(
                     onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => NotificationPage()),
-                    );
-                  },
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NotificationPage(),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.notifications_none_outlined),
                     iconSize: 28,
                     color: Colors.grey[700],
@@ -153,16 +256,20 @@ class _DashboardPageState extends State<DashboardPage> {
                             onPressed: () {
                               showDialog(
                                 context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text("Dismiss Challenge"),
-                                  content: Text("Kartu challenge disembunyikan."),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text("OK"),
+                                builder:
+                                    (context) => AlertDialog(
+                                      title: Text("Dismiss Challenge"),
+                                      content: Text(
+                                        "Kartu challenge disembunyikan.",
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed:
+                                              () => Navigator.pop(context),
+                                          child: Text("OK"),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
                               );
                             },
                             icon: const Icon(Icons.close),
@@ -187,7 +294,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         child: ElevatedButton(
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Good job! Kamu menyelesaikan challenge")),
+                              SnackBar(
+                                content: Text(
+                                  "Good job! Kamu menyelesaikan challenge",
+                                ),
+                              ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
@@ -195,7 +306,10 @@ class _DashboardPageState extends State<DashboardPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                           ),
                           child: Text(
                             'Done',
@@ -237,7 +351,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       IconButton(
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Menampilkan statistik lengkap...")),
+                            SnackBar(
+                              content: Text("Menampilkan statistik lengkap..."),
+                            ),
                           );
                         },
                         icon: const Icon(Icons.arrow_forward_ios_rounded),
@@ -261,7 +377,10 @@ class _DashboardPageState extends State<DashboardPage> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 12,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -304,7 +423,10 @@ class _DashboardPageState extends State<DashboardPage> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 12,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -360,48 +482,53 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: isLoading
-                      ? Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            // Icon cuaca sederhana, bisa dikembangkan dengan mapping icon dari API
-                            const Icon(Icons.cloud, color: Colors.white, size: 60),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Malam | $weatherLocation',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  '${temperature.toStringAsFixed(0)}°C',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 28,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  weatherDescription,
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 14,
-                                    color: Colors.white70,
-                                  ),
-                                ),
-                              ],
+                  child:
+                      isLoading
+                          ? Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
                             ),
-                          ],
-                        ),
+                          )
+                          : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              // Icon cuaca sederhana, bisa dikembangkan dengan mapping icon dari API
+                              const Icon(
+                                Icons.cloud,
+                                color: Colors.white,
+                                size: 60,
+                              ),
+                              const SizedBox(width: 16),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Malam | $weatherLocation',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${temperature.toStringAsFixed(0)}°C',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 28,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    weatherDescription,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                 ),
               ),
             ],
@@ -424,7 +551,10 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.directions_run), label: 'Challenge'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_run),
+            label: 'Challenge',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
@@ -435,9 +565,27 @@ class _DashboardPageState extends State<DashboardPage> {
           });
 
           if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: Text("Challenge Page")), body: Center(child: Text("Coming Soon")))));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (_) => Scaffold(
+                      appBar: AppBar(title: Text("Challenge Page")),
+                      body: Center(child: Text("Coming Soon")),
+                    ),
+              ),
+            );
           } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: Text("Profile Page")), body: Center(child: Text("Profile Wildan")))));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (_) => Scaffold(
+                      appBar: AppBar(title: Text("Profile Page")),
+                      body: Center(child: Text("Profile Wildan")),
+                    ),
+              ),
+            );
           }
         },
       ),
