@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:lari_yuk/pages/ProfilePage.dart';
 import 'package:lari_yuk/pages/notification_page.dart';
 import 'package:lari_yuk/services/firestore_service.dart';
 
@@ -604,10 +605,7 @@ class _DashboardPageState extends State<DashboardPage> {
               context,
               MaterialPageRoute(
                 builder:
-                    (_) => Scaffold(
-                      appBar: AppBar(title: Text("Profile Page")),
-                      body: Center(child: Text("Profile Wildan")),
-                    ),
+                    (_) => ProfilePage(),
               ),
             );
           }

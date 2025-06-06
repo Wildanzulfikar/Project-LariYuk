@@ -1,9 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  List<Map<String, dynamic>> monthlyData = [];
+  bool isLoading = true;
+  double weight = 65.0;
+  double height = 170.0;
+  String userName = 'WILDAN ZULFIKAR';
+  String userLocation = 'Daerah Khusus Ibukota\nJakarta, Indonesia';
+  String? profileImageUrl;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user == null) {
+        setState(() => isLoading = false);
+        return;
+      }
+
+      // 1. Load profile data
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        setState(() {
+          weight =
+              data?['weight']?.toDouble() ??
+              65.0; // Pastikan field 'weight' ada
+          height = data?['height']?.toDouble() ?? 170.0;
+          userName = data?['name'] ?? 'Light Switch';
+          userLocation = data?['location'] ?? 'Unknown location'; // Sesuaikan
+          profileImageUrl = data?['avatarUrl'];
+        });
+      }
+
+      // 2. Load running history (subcollection)
+      final runningHistoryQuery =
+          await _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('running_history')
+              .get();
+
+      final Map<int, double> monthlyDistance = {};
+
+      for (final doc in runningHistoryQuery.docs) {
+        final data = doc.data();
+        final distance = data['distance'] as double? ?? 0.0;
+        final timestamp =
+            data['date'] as Timestamp?; // Asumsi field 'date' adalah Timestamp
+
+        if (timestamp != null) {
+          final date = timestamp.toDate();
+          final month = date.month;
+          monthlyDistance[month] = (monthlyDistance[month] ?? 0.0) + distance;
+        }
+      }
+
+      // 3. Format data untuk chart
+      final formattedData = List.generate(12, (index) {
+        final month = index + 1;
+        return {'month': month, 'distance': monthlyDistance[month] ?? 0.0};
+      });
+
+      setState(() {
+        monthlyData = formattedData;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      debugPrint('Error loading user data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading data: ${e.toString()}')),
+      );
+    }
+  }
+
+  double _calculateMaxY() {
+    if (monthlyData.isEmpty) return 10;
+    final maxDistance = monthlyData
+        .map((e) => e['distance'])
+        .reduce((a, b) => a > b ? a : b);
+    return (maxDistance * 1.2).ceilToDouble();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,22 +132,29 @@ class ProfilePage extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 40,
-                      backgroundImage: AssetImage('assets/profile.jpg'),
+                      backgroundImage:
+                          profileImageUrl != null
+                              ? NetworkImage(profileImageUrl!)
+                              : const AssetImage('assets/profile.jpg')
+                                  as ImageProvider,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'WILDAN ZULFIKAR',
+                      userName,
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      'Daerah Khusus Ibukota\nJakarta, Indonesia',
+                      userLocation,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -58,15 +162,27 @@ class ProfilePage extends StatelessWidget {
                       children: [
                         Column(
                           children: const [
-                            Text('Mengikuti', style: TextStyle(color: Colors.grey)),
-                            Text('1', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              'Mengikuti',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              '1',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                         const SizedBox(width: 40),
                         Column(
                           children: const [
-                            Text('Para pengikut', style: TextStyle(color: Colors.grey)),
-                            Text('1', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              'Para pengikut',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              '1',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                       ],
@@ -93,72 +209,122 @@ class ProfilePage extends StatelessWidget {
                           child: const Text('Edit'),
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
 
               // Berat & Tinggi Badan
-              const Text('Berat Badan', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text('1000 CM', style: TextStyle(color: Colors.grey)),
+              const Text(
+                'Berat Badan',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '${weight.toStringAsFixed(1)} KG',
+                style: const TextStyle(color: Colors.grey),
+              ),
               const Divider(),
-              const Text('Tinggi Badan', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Text('1000 KG', style: TextStyle(color: Colors.grey)),
+              const Text(
+                'Tinggi Badan',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '${height.toStringAsFixed(1)} CM',
+                style: const TextStyle(color: Colors.grey),
+              ),
               const Divider(),
 
               const SizedBox(height: 16),
-              const Text('Monthly Report', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Monthly Report',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
 
-             // Chart
-Container(
-  height: 220,
-  padding: const EdgeInsets.all(12),
-  decoration: BoxDecoration(
-    color: Colors.orange.shade100,
-    borderRadius: BorderRadius.circular(16),
-  ),
-  child: BarChart(
-    BarChartData(
-      alignment: BarChartAlignment.spaceAround,
-      maxY: 10,
-      barTouchData: BarTouchData(enabled: false),
-      titlesData: FlTitlesData(
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(showTitles: true, reservedSize: 30),
-        ),
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            getTitlesWidget: (double value, TitleMeta meta) {
-              const months = [
-                'JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN',
-                'JUL', 'AGU', 'SEP', 'OKT', 'NOV', 'DES'
-              ];
-              if (value.toInt() < months.length) {
-                return Text(months[value.toInt()], style: const TextStyle(fontSize: 10));
-              }
-              return const Text('');
-            },
-          ),
-        ),
-        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      ),
-      borderData: FlBorderData(show: false),
-      barGroups: List.generate(12, (index) {
-        final dummyValue = (index + 1) * 0.7 % 10; // nilai dummy antara 0–10
-        return BarChartGroupData(
-          x: index,
-          barRods: [
-            BarChartRodData(toY: dummyValue, color: Colors.orange, width: 14),
-          ],
-        );
-      }),
-    ),
-  ),
-),
+              // Chart
+              Container(
+                height: 220,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade100,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child:
+                    isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : BarChart(
+                          BarChartData(
+                            alignment: BarChartAlignment.spaceAround,
+                            maxY: _calculateMaxY(),
+                            barTouchData: BarTouchData(enabled: false),
+                            titlesData: FlTitlesData(
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 30,
+                                  getTitlesWidget: (value, meta) {
+                                    return Text(value.toInt().toString());
+                                  },
+                                ),
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  getTitlesWidget: (
+                                    double value,
+                                    TitleMeta meta,
+                                  ) {
+                                    const months = [
+                                      'JAN',
+                                      'FEB',
+                                      'MAR',
+                                      'APR',
+                                      'MEI',
+                                      'JUN',
+                                      'JUL',
+                                      'AGU',
+                                      'SEP',
+                                      'OKT',
+                                      'NOV',
+                                      'DES',
+                                    ];
+                                    if (value.toInt() < months.length) {
+                                      return Text(
+                                        months[value.toInt()],
+                                        style: const TextStyle(fontSize: 10),
+                                      );
+                                    }
+                                    return const Text('');
+                                  },
+                                ),
+                              ),
+                              rightTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              topTitles: AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                            ),
+                            borderData: FlBorderData(show: false),
+                            barGroups:
+                                monthlyData.map((data) {
+                                  final monthIndex = data['month'] - 1;
+                                  final distance = data['distance'];
+                                  return BarChartGroupData(
+                                    x: monthIndex,
+                                    barRods: [
+                                      BarChartRodData(
+                                        toY: distance,
+                                        color: Colors.orange,
+                                        width: 14,
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                          ),
+                        ),
+              ),
               const SizedBox(height: 16),
 
               // Bottom two cards
@@ -168,7 +334,7 @@ Container(
                   _infoCard(Icons.emoji_events, 'Challange Cleared', '10'),
                   _infoCard(Icons.flag, 'Session Finished', '10'),
                 ],
-              )
+              ),
             ],
           ),
         ),
@@ -189,12 +355,19 @@ Container(
           children: [
             Icon(icon, color: Colors.white, size: 30),
             const SizedBox(height: 8),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.white)),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Colors.white),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
       ),
