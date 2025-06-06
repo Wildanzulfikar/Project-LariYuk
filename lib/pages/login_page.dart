@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lari_yuk/pages/dashboard_page.dart';
 import 'package:lari_yuk/pages/register_page.dart';
+import 'package:lari_yuk/services/firestore_service.dart';
 import 'package:lari_yuk/theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -15,16 +16,18 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final FirestoreService _firestoreService = FirestoreService();
   bool obscureText = true;
   bool isLoading = false;
 
   Future<void> signInWithEmail() async {
     setState(() => isLoading = true);
     try {
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
 
       User? user = userCredential.user;
 
@@ -32,45 +35,59 @@ class _LoginPageState extends State<LoginPage> {
         // Email belum diverifikasi
         await showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Email Belum Diverifikasi"),
-            content: const Text("Silakan verifikasi email Anda terlebih dahulu."),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  try {
-                    await user.sendEmailVerification();
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Email verifikasi telah dikirim ulang")),
-                    );
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Gagal mengirim verifikasi: ${e.toString()}")),
-                    );
-                  }
-                },
-                child: const Text("Kirim Ulang Verifikasi"),
+          builder:
+              (context) => AlertDialog(
+                title: const Text("Email Belum Diverifikasi"),
+                content: const Text(
+                  "Silakan verifikasi email Anda terlebih dahulu.",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () async {
+                      try {
+                        await user.sendEmailVerification();
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Email verifikasi telah dikirim ulang",
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              "Gagal mengirim verifikasi: ${e.toString()}",
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: const Text("Kirim Ulang Verifikasi"),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Tutup"),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Tutup"),
-              ),
-            ],
-          ),
         );
-        await FirebaseAuth.instance.signOut(); // Logout paksa jika belum verifikasi
+        await FirebaseAuth.instance
+            .signOut(); // Logout paksa jika belum verifikasi
       } else {
-        // Sudah diverifikasi
+        // Sudah diverifikasi, create/update user document
+        print('Email login successful for ${user?.email}');
+        await _firestoreService.createUserDocument();
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const DashboardPage()),
         );
       }
     } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login gagal: ${e.message}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login gagal: ${e.message}')));
     } finally {
       setState(() => isLoading = false);
     }
@@ -94,40 +111,76 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> handleGoogleSignIn() async {
+    setState(() => isLoading = true);
+    try {
+      final userCredential = await signInWithGoogle();
+      if (userCredential != null) {
+        print('Google Sign-In successful: ${userCredential.user?.uid}');
+        await _firestoreService.createUserDocument();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Google Sign-In failed or cancelled')),
+        );
+      }
+    } catch (e) {
+      print('Detailed error during Google Sign-In: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error during Google Sign-In: ${e.toString()}')),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
   Future<void> showForgotPasswordDialog() async {
     final TextEditingController forgotEmailController = TextEditingController();
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Reset Password"),
-        content: TextField(
-          controller: forgotEmailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(hintText: "Enter your email address"),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
-          TextButton(
-            onPressed: () async {
-              final email = forgotEmailController.text.trim();
-              if (email.isNotEmpty) {
-                try {
-                  await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Reset link sent to your email")),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error: ${e.toString()}")),
-                  );
-                }
-              }
-            },
-            child: const Text("Send"),
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Reset Password"),
+            content: TextField(
+              controller: forgotEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                hintText: "Enter your email address",
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  final email = forgotEmailController.text.trim();
+                  if (email.isNotEmpty) {
+                    try {
+                      await FirebaseAuth.instance.sendPasswordResetEmail(
+                        email: email,
+                      );
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Reset link sent to your email"),
+                        ),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error: ${e.toString()}")),
+                      );
+                    }
+                  }
+                },
+                child: const Text("Send"),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -135,7 +188,10 @@ class _LoginPageState extends State<LoginPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Email Address', style: blackTextStyle.copyWith(fontSize: 12, fontWeight: medium)),
+        Text(
+          'Email Address',
+          style: blackTextStyle.copyWith(fontSize: 12, fontWeight: medium),
+        ),
         const SizedBox(height: 8),
         Container(
           height: 50,
@@ -162,7 +218,10 @@ class _LoginPageState extends State<LoginPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Password', style: blackTextStyle.copyWith(fontSize: 12, fontWeight: medium)),
+        Text(
+          'Password',
+          style: blackTextStyle.copyWith(fontSize: 12, fontWeight: medium),
+        ),
         const SizedBox(height: 8),
         Container(
           height: 50,
@@ -185,7 +244,10 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               IconButton(
-                icon: Icon(obscureText ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+                icon: Icon(
+                  obscureText ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey,
+                ),
                 onPressed: () => setState(() => obscureText = !obscureText),
               ),
             ],
@@ -199,7 +261,11 @@ class _LoginPageState extends State<LoginPage> {
               onTap: showForgotPasswordDialog,
               child: Text(
                 'Forgot Password',
-                style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -219,9 +285,17 @@ class _LoginPageState extends State<LoginPage> {
           borderRadius: BorderRadius.circular(4),
         ),
         child: Center(
-          child: isLoading
-              ? const CircularProgressIndicator(color: Colors.white)
-              : Text('Login', style: primaryTextStyle.copyWith(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
+          child:
+              isLoading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                    'Login',
+                    style: primaryTextStyle.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
         ),
       ),
     );
@@ -233,7 +307,13 @@ class _LoginPageState extends State<LoginPage> {
         Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text('Or Login With', style: secondaryTextStyle.copyWith(fontSize: 11, fontWeight: FontWeight.w400)),
+          child: Text(
+            'Or Login With',
+            style: secondaryTextStyle.copyWith(
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
         ),
         Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),
       ],
@@ -242,19 +322,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Widget googleSignInButton() {
     return GestureDetector(
-      onTap: () async {
-        final userCredential = await signInWithGoogle();
-        if (userCredential != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Google Sign-In failed or cancelled')),
-          );
-        }
-      },
+      onTap: isLoading ? null : handleGoogleSignIn,
       child: Container(
         height: 50,
         width: double.infinity,
@@ -269,7 +337,10 @@ class _LoginPageState extends State<LoginPage> {
             const SizedBox(width: 8),
             Text(
               'Lanjutkan dengan Google',
-              style: blackTextStyle.copyWith(fontSize: 12, fontWeight: FontWeight.w500),
+              style: blackTextStyle.copyWith(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -288,7 +359,13 @@ class _LoginPageState extends State<LoginPage> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           iconSize: 16,
         ),
-        title: Text('Login Lari Yuk', style: primaryTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Text(
+          'Login Lari Yuk',
+          style: primaryTextStyle.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: backgroundColor3,
         elevation: 0,
@@ -300,9 +377,27 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Welcome to Your Running Journey', style: primaryTextStyle.copyWith(fontWeight: FontWeight.w700, fontSize: 18)),
-              Text('Track, Run, Succeed! 🏃‍♂️', style: thirdTextStyle.copyWith(fontWeight: FontWeight.w700, fontSize: 18)),
-              Text('Happy to see you again. Please login here.', style: secondaryTextStyle.copyWith(fontWeight: FontWeight.w400, fontSize: 14)),
+              Text(
+                'Welcome to Your Running Journey',
+                style: primaryTextStyle.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                'Track, Run, Succeed! 🏃‍♂️',
+                style: thirdTextStyle.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                ),
+              ),
+              Text(
+                'Happy to see you again. Please login here.',
+                style: secondaryTextStyle.copyWith(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 14,
+                ),
+              ),
               const SizedBox(height: 36),
               emailInput(),
               const SizedBox(height: 20),
@@ -317,16 +412,27 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text('Belum punya akun?', style: secondaryTextStyle.copyWith(fontSize: 12)),
+                  Text(
+                    'Belum punya akun?',
+                    style: secondaryTextStyle.copyWith(fontSize: 12),
+                  ),
                   const SizedBox(width: 6),
                   GestureDetector(
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const RegisterPage()),
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
                       );
                     },
-                    child: Text('Daftar', style: primaryTextStyle.copyWith(fontWeight: FontWeight.w600, fontSize: 12)),
+                    child: Text(
+                      'Daftar',
+                      style: primaryTextStyle.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ],
               ),

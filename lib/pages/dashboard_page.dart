@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:lari_yuk/pages/notification_page.dart';
+import 'package:lari_yuk/services/firestore_service.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -24,12 +25,15 @@ class _DashboardPageState extends State<DashboardPage> {
   bool isLoading = true;
   String userName = 'Loading...';
   String? profileImageUrl;
+  final FirestoreService _firestoreService = FirestoreService();
+  Map<String, dynamic>? todayRunData;
 
   @override
   void initState() {
     super.initState();
     _getUserName();
     fetchWeather();
+    _fetchTodayRunData();
   }
 
   Future<void> _getUserName() async {
@@ -40,6 +44,20 @@ class _DashboardPageState extends State<DashboardPage> {
         userName = user.displayName ?? user.email?.split('@')[0] ?? 'User';
         profileImageUrl = user.photoURL;
       });
+    }
+  }
+
+  Future<void> _fetchTodayRunData() async {
+    setState(() => isLoading = true);
+    try {
+      todayRunData = await _firestoreService.getTodayRunningData();
+    } catch (e) {
+      print('Error fetching today\'s run data: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error fetching run data: $e')));
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -176,7 +194,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       CircleAvatar(
                         radius: 24,
-                        backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : AssetImage('assets/photomoki.png'),
+                        backgroundImage:
+                            profileImageUrl != null
+                                ? NetworkImage(profileImageUrl!)
+                                : AssetImage('assets/photomoki.png'),
                       ),
                       const SizedBox(width: 16),
                       Column(
@@ -394,9 +415,11 @@ class _DashboardPageState extends State<DashboardPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '900',
+                                  isLoading
+                                      ? 'Loading...'
+                                      : (todayRunData?['steps']?.toString() ?? '0'),
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 28,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -440,9 +463,11 @@ class _DashboardPageState extends State<DashboardPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '150',
+                                   isLoading
+                                      ? 'Loading...'
+                                      : (todayRunData?['calories']?.toString() ?? '0'),
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 28,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -492,7 +517,6 @@ class _DashboardPageState extends State<DashboardPage> {
                           : Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              // Icon cuaca sederhana, bisa dikembangkan dengan mapping icon dari API
                               const Icon(
                                 Icons.cloud,
                                 color: Colors.white,
@@ -503,7 +527,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Malam | $weatherLocation',
+                                    '$weatherLocation',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 16,
                                       color: Colors.white,
