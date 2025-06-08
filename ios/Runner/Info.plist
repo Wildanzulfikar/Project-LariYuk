@@ -3,6 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to location when in use for tracking your run.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs access to location even when the app is in the background for tracking your run.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+	<string>location</string>
+	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs your location to fetch weather data.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>

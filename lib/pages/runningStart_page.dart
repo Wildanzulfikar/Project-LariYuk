@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_map/flutter_map.dart'; // Remove this import
-// import 'package:latlong2/latlong.dart'; // Remove this import
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lari_yuk/theme.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // Add this import
+import 'package:google_maps_flutter/google_maps_flutter.dart'; 
 
-// You might need to adjust LatLng usage or import google_maps_flutter's LatLng
-// For now, let's use google_maps_flutter's LatLng
-// import 'package:latlong2/latlong.dart' as latlong2; // Alias if needed
 
 class RunningStartPage extends StatefulWidget {
   const RunningStartPage({Key? key}) : super(key: key);
@@ -21,7 +15,7 @@ class RunningStartPage extends StatefulWidget {
 }
 
 class _RunningStartPageState extends State<RunningStartPage> {
-  // Use google_maps_flutter's LatLng
+ 
   LatLng? _currentLocation;
   double _range = 3.0;
   bool _isRunning = false;
@@ -33,11 +27,11 @@ class _RunningStartPageState extends State<RunningStartPage> {
   int _temperature = 0;
   Timer? _timer;
 
-  // Use google_maps_flutter's LatLng for route points
+ 
   List<LatLng> _routePoints = [];
   StreamSubscription<Position>? _positionStream;
 
-  // Google Maps controller
+ 
   GoogleMapController? _mapController;
 
   @override

@@ -38,6 +38,11 @@ class _DashboardPageState extends State<DashboardPage> {
     _fetchTodayRunData();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> _getUserName() async {
     User? user = FirebaseAuth.instance.currentUser;
     print("USERLOGIN: ${user}");
@@ -610,7 +615,7 @@ class _DashboardPageState extends State<DashboardPage> {
           if (index == 0) {
             // Stay on Dashboard
           } else if (index == 1) { // Updated index for Start
-            Navigator.pushReplacementNamed(context, '/running-start');
+            Navigator.pushReplacementNamed(context, '/running-track');
           } else if (index == 2) { // Updated index for Challenge
             Navigator.pushReplacementNamed(context, '/challenge');
           }

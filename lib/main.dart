@@ -5,6 +5,7 @@ import 'package:lari_yuk/pages/challenge_page.dart';
 import 'package:lari_yuk/pages/dashboard_page.dart';
 import 'package:lari_yuk/pages/login_page.dart';
 import 'package:lari_yuk/pages/runningStart_page.dart'; // Import the RunningStartPage
+import 'package:lari_yuk/pages/running_track_page.dart';
 import 'package:lari_yuk/pages/splash_screen.dart';
 import 'package:lari_yuk/pages/register_page.dart'; // Import RegisterPage
 import 'package:lari_yuk/pages/detailChallenge_page.dart'; // Import DetailChallengePage
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => ProfilePage(), // Define Profile route
         '/notification': (context) => NotificationPage(), // Define Notification route
         '/detail': (context) => DetailPage(), // Define Detail route
+        '/running-track' : (context) => RunningTrackPage()
       },
     );
   }
