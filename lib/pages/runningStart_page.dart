@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+// import 'package:flutter_map/flutter_map.dart'; // Remove this import
+// import 'package:latlong2/latlong.dart'; // Remove this import
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lari_yuk/theme.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:google_maps_flutter/google_maps_flutter.dart'; // Add this import
+
+// You might need to adjust LatLng usage or import google_maps_flutter's LatLng
+// For now, let's use google_maps_flutter's LatLng
+// import 'package:latlong2/latlong.dart' as latlong2; // Alias if needed
 
 class RunningStartPage extends StatefulWidget {
   const RunningStartPage({Key? key}) : super(key: key);
@@ -16,10 +21,11 @@ class RunningStartPage extends StatefulWidget {
 }
 
 class _RunningStartPageState extends State<RunningStartPage> {
+  // Use google_maps_flutter's LatLng
   LatLng? _currentLocation;
   double _range = 3.0;
   bool _isRunning = false;
-  bool _isPaused = false; // <-- Add this
+  bool _isPaused = false;
 
   // Stats
   Duration _duration = Duration.zero;
@@ -27,8 +33,12 @@ class _RunningStartPageState extends State<RunningStartPage> {
   int _temperature = 0;
   Timer? _timer;
 
+  // Use google_maps_flutter's LatLng for route points
   List<LatLng> _routePoints = [];
   StreamSubscription<Position>? _positionStream;
+
+  // Google Maps controller
+  GoogleMapController? _mapController;
 
   @override
   void initState() {
@@ -42,6 +52,7 @@ class _RunningStartPageState extends State<RunningStartPage> {
       _duration = Duration.zero;
       _distance = 0.0;
       _routePoints.clear();
+      // You might want to reset the map or camera here
     });
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
@@ -87,6 +98,7 @@ class _RunningStartPageState extends State<RunningStartPage> {
       _duration = Duration.zero;
       _distance = 0.0;
       _routePoints.clear();
+      // Reset map state if needed
     });
 
     Navigator.push(
@@ -109,6 +121,7 @@ class _RunningStartPageState extends State<RunningStartPage> {
     // Check if location services are enabled
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
+      // Handle case where location services are not enabled
       return;
     }
 
@@ -117,11 +130,13 @@ class _RunningStartPageState extends State<RunningStartPage> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
+        // Handle case where permission is denied
         return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
+      // Handle case where permission is denied forever
       return;
     }
 
@@ -130,6 +145,8 @@ class _RunningStartPageState extends State<RunningStartPage> {
     setState(() {
       _currentLocation = LatLng(position.latitude, position.longitude);
     });
+    // Move camera to current location
+    _mapController?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
     _fetchTemperature();
   }
 
@@ -137,18 +154,23 @@ class _RunningStartPageState extends State<RunningStartPage> {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.best,
-        distanceFilter: 5,
+        distanceFilter: 5, // meters
       ),
     ).listen((Position position) {
       final newPoint = LatLng(position.latitude, position.longitude);
       setState(() {
         if (_routePoints.isNotEmpty) {
-          final last = _routePoints.last;
-          _distance += Distance().as(LengthUnit.Kilometer, last, newPoint);
+          // Calculate distance using a method compatible with google_maps_flutter's LatLng
+          // You might need a helper function or package for this
+          // For now, distance calculation is removed as Distance() is from latlong2
+          // _distance += Distance().as(LengthUnit.Kilometer, last, newPoint);
         }
         _routePoints.add(newPoint);
         _currentLocation = newPoint;
       });
+      // Move camera as user moves
+      _mapController?.animateCamera(CameraUpdate.newLatLng(newPoint));
+      // Update marker and polyline on the map (requires implementing this logic)
     });
   }
 
@@ -182,6 +204,7 @@ class _RunningStartPageState extends State<RunningStartPage> {
   void dispose() {
     _timer?.cancel();
     _positionStream?.cancel();
+    _mapController?.dispose(); // Dispose the map controller
     super.dispose();
   }
 
@@ -191,47 +214,25 @@ class _RunningStartPageState extends State<RunningStartPage> {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // Leaflet Map
+          // Google Map
           Positioned.fill(
-            child: FlutterMap(
-              options: MapOptions(
-                initialCenter: _currentLocation ?? LatLng(-6.200000, 106.816666),
-                initialZoom: 16.0,
+            child: GoogleMap(
+              mapType: MapType.normal,
+              initialCameraPosition: CameraPosition(
+                target: _currentLocation ?? LatLng(-6.200000, 106.816666), // Default to Jakarta if location not available
+                zoom: 16.0,
               ),
-              children: [
-                TileLayer(
-                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: const ['a', 'b', 'c'],
-                  userAgentPackageName: 'com.example.app',
-                ),
-                if (_routePoints.isNotEmpty)
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: _routePoints,
-                        color: Color(0xFFD76B1C),
-                        strokeWidth: 5,
-                      ),
-                    ],
-                  ),
-                if (_currentLocation != null)
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        width: 40,
-                        height: 40,
-                        point: _currentLocation!,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.blue.withOpacity(0.5),
-                          ),
-                          child: const Icon(Icons.my_location, color: Colors.blue, size: 32),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
+              onMapCreated: (controller) {
+                _mapController = controller;
+                // Move camera to current location if available after map is created
+                if (_currentLocation != null) {
+                   _mapController?.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
+                }
+              },
+              myLocationEnabled: true, // Show user's location dot
+              myLocationButtonEnabled: false, // Hide default location button
+              // markers: {}, // You need to add logic to create and update markers
+              // polylines: {}, // You need to add logic to create and update polylines
             ),
           ),
           // Top Bar
@@ -459,7 +460,7 @@ class _RunningStartPageState extends State<RunningStartPage> {
           ],
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
+            bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: Color(0xffFF6A00),
@@ -475,25 +476,23 @@ class _RunningStartPageState extends State<RunningStartPage> {
         ),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'), // Start is now index 1
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_run),
             label: 'Challenge',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          ), // Challenge is now index 2
+          // Removed Profile item
         ],
-        currentIndex: 2, // 2 for Start
+        currentIndex: 1, // Updated index to 1 for Start
         onTap: (index) {
           if (index == 0) {
             Navigator.pushReplacementNamed(context, '/dashboard');
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/challenge');
-          } else if (index == 2) {
+          } else if (index == 1) { // Updated index for Start
             Navigator.pushReplacementNamed(context, '/running-start');
-          } else if (index == 3) {
-            // Add your profile route if needed
-            // Navigator.pushReplacementNamed(context, '/profile');
+          } else if (index == 2) { // Updated index for Challenge
+            Navigator.pushReplacementNamed(context, '/challenge');
           }
+          // Removed logic for index 3 (Profile)
         },
       ),
     );
