@@ -51,6 +51,7 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() => isLoading = true);
     try {
       todayRunData = await _firestoreService.getTodayRunningData();
+      print("RUNNING DATA: $todayRunData");
     } catch (e) {
       print('Error fetching today\'s run data: $e');
       ScaffoldMessenger.of(
