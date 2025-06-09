@@ -239,34 +239,6 @@ class ChallengePage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Color(0xffFF6A00),
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        selectedLabelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-        ),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_run),
-            label: 'Challenge',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        currentIndex: 1, // Ubah ke 1 untuk menandai Challenge aktif
-        onTap: (index) {
-          // Tambahkan navigasi jika diperlukan
-        },
-      ),
     );
   }
 }

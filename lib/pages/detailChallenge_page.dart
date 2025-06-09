@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lari_yuk/theme.dart';
+// import 'package:lari_yuk/theme.dart';
 
 class DetailChallengePage extends StatelessWidget {
   const DetailChallengePage({Key? key}) : super(key: key);

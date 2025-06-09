@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lari_yuk/theme.dart';
+import 'package:lari_yuk/main_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -459,43 +459,6 @@ class _RunningStartPageState extends State<RunningStartPage> {
           ],
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: Color(0xffFF6A00),
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        selectedLabelStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-        ),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_run),
-            label: 'Challenge',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        currentIndex: 2, // 2 for Start
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/dashboard');
-          } else if (index == 1) {
-            Navigator.pushReplacementNamed(context, '/challenge');
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/running-start');
-          } else if (index == 3) {
-            // Add your profile route if needed
-            // Navigator.pushReplacementNamed(context, '/profile');
-          }
-        },
-      ),
     );
   }
 
@@ -736,7 +699,11 @@ class _AfterRunPageState extends State<AfterRunPage> with SingleTickerProviderSt
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => MainScreen()),
+                        (route) => false,
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFF6A4D),
@@ -762,6 +729,7 @@ class _AfterRunPageState extends State<AfterRunPage> with SingleTickerProviderSt
             ],
           ),
         ),
+        
       ),
     );
   }

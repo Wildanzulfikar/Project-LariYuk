@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,7 +16,6 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  int currentIndex = 0;
 
   String weatherDescription = '';
   double temperature = 0;
@@ -558,60 +556,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xffFF6A00),
-        unselectedItemColor: Colors.grey[600],
-        showUnselectedLabels: true,
-        selectedLabelStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-        ),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_run),
-            label: 'Challenge',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-        currentIndex: currentIndex,
-        onTap: (index) {
-          setState(() {
-            currentIndex = index;
-          });
-
-          if (index == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (_) => Scaffold(
-                      appBar: AppBar(title: Text("Challenge Page")),
-                      body: Center(child: Text("Coming Soon")),
-                    ),
-              ),
-            );
-          } else if (index == 3) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (_) => Scaffold(
-                      appBar: AppBar(title: Text("Profile Page")),
-                      body: Center(child: Text("Profile Wildan")),
-                    ),
-              ),
-            );
-          }
-        },
       ),
     );
   }
