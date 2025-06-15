@@ -8,6 +8,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:lari_yuk/pages/dashboard_page.dart'; // Import DashboardPage
 
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -170,15 +173,27 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         Column(
                           children: const [
-                            Text('Mengikuti', style: TextStyle(color: Colors.grey)),
-                            Text('1', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              'Mengikuti',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              '1',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                         const SizedBox(width: 40),
                         Column(
                           children: const [
-                            Text('Para pengikut', style: TextStyle(color: Colors.grey)),
-                            Text('1', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              'Para pengikut',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            Text(
+                              '1',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                       ],
@@ -211,7 +226,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: Text(isEditing ? 'Simpan' : 'Edit'),
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -229,7 +244,10 @@ class _ProfilePageState extends State<ProfilePage> {
               const Divider(),
 
               const SizedBox(height: 16),
-              const Text('Monthly Report', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Monthly Report',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
 
               // Chart
@@ -278,7 +296,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _infoCard(Icons.emoji_events, 'Challange Cleared', '10'),
                   _infoCard(Icons.flag, 'Session Finished', '10'),
                 ],
-              )
+              ),
             ],
           ),
         ),
