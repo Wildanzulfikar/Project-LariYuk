@@ -174,48 +174,62 @@ class _RunningTrackPageState extends State<RunningTrackPage> {
   }
 
   void _stopTracking() async {
-    if (!_isTracking) return;
+  if (!_isTracking) return;
 
-    _positionStreamSubscription?.cancel();
-    _timer?.cancel();
+  _positionStreamSubscription?.cancel();
+  _timer?.cancel();
+  _animationTimer?.cancel();
+  _isTracking = false;
+  _isPaused = false;
+
+  if (_totalDistance < 0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Jarak terlalu pendek untuk disimpan.')),
+    );
+    _positionStreamSubscription?.pause();
     _animationTimer?.cancel();
-    _isTracking = false;
-    _isPaused = false;
+    _isPaused = true;
 
-    if (_totalDistance < 100) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Jarak terlalu pendek untuk disimpan.')),
-      );
-      _positionStreamSubscription?.pause();
-      _animationTimer?.cancel();
-      _isPaused = true;
-
-      setState(() {});
-      return;
-    }
-
-    final duration = _elapsedSeconds;
-    final calories = _calculateCalories(_totalDistance / 1000, duration);
-    final steps = _estimateSteps(_totalDistance / 1000);
-
-    if (_currentUserId != null) {
-      await _db.collection('users').doc(_currentUserId).collection('running_history').add({
-        'date': Timestamp.fromDate(DateTime.now().toUtc().add(const Duration(hours: 7))),
-        'distance': _totalDistance / 1000,
-        'duration': duration / 60,
-        'calories': calories,
-        'steps': steps,
-        'status': 'completed',
-        'pace': duration / 60 / (_totalDistance / 1000),
-      });
-
-      await _db.collection('users').doc(_currentUserId).update({
-        'totalRuns': FieldValue.increment(1),
-        'totalDistance': FieldValue.increment(_totalDistance / 1000),
-      });
-    }
     setState(() {});
+    return;
   }
+
+  final duration = _elapsedSeconds;
+  final calories = _calculateCalories(_totalDistance / 1000, duration);
+  final steps = _estimateSteps(_totalDistance / 1000);
+
+  if (_currentUserId != null) {
+    await _db.collection('users').doc(_currentUserId).collection('running_history').add({
+      'date': Timestamp.fromDate(DateTime.now().toUtc().add(const Duration(hours: 7))),
+      'distance': _totalDistance / 1000,
+      'duration': duration / 60,
+      'calories': calories,
+      'steps': steps,
+      'status': 'completed',
+      'pace': duration / 60 / (_totalDistance / 1000),
+    });
+
+    await _db.collection('users').doc(_currentUserId).update({
+      'totalRuns': FieldValue.increment(1),
+      'totalDistance': FieldValue.increment(_totalDistance / 1000),
+    });
+  }
+
+  // Navigasi ke halaman Summary setelah data disimpan
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (_) => SummaryPage(
+        distance: _totalDistance / 1000,
+        duration: duration,
+        pace: _formatPace(duration, _totalDistance / 1000),
+        temperature: 27, // bisa diganti ke dynamic cuaca jika kamu mau
+      ),
+    ),
+  );
+
+  setState(() {});
+}
 
   int _calculateCalories(double distanceKm, int durationSeconds) {
     const double caloriesPerKm = 50.0;
@@ -349,6 +363,101 @@ class _RunningTrackPageState extends State<RunningTrackPage> {
           Text(value,
               style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
         ],
+      ),
+    );
+  }
+}
+
+class SummaryPage extends StatefulWidget {
+  final double distance;
+  final int duration;
+  final String pace;
+  final int temperature;
+
+  const SummaryPage({super.key, required this.distance, required this.duration, required this.pace, required this.temperature});
+
+  @override
+  State<SummaryPage> createState() => _SummaryPageState();
+}
+
+class _SummaryPageState extends State<SummaryPage> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    _animation = Tween<double>(begin: -10, end: 10).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _formatDuration(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remaining = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remaining.toString().padLeft(2, '0')}';
+  }
+
+  Widget _statRow({required IconData icon, required String label, required String value}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.orange),
+          const SizedBox(width: 12),
+          Text('$label:', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          const Spacer(),
+          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7E6),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              AnimatedBuilder(
+                animation: _animation,
+                builder: (context, child) {
+                  return Transform.translate(offset: Offset(0, _animation.value), child: child);
+                },
+                child: const Icon(Icons.emoji_events, size: 100, color: Colors.amber),
+              ),
+              const SizedBox(height: 24),
+              const Text('Congratulations!', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                child: Text('You have completed your run!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16, color: Colors.black54)),
+              ),
+              const SizedBox(height: 24),
+              _statRow(icon: Icons.timer, label: 'Duration', value: _formatDuration(widget.duration)),
+              _statRow(icon: Icons.directions_run, label: 'Distance (KM)', value: widget.distance.toStringAsFixed(2)),
+              _statRow(icon: Icons.speed, label: 'Pace', value: widget.pace),
+              _statRow(icon: Icons.thermostat, label: 'Temperature', value: '${widget.temperature}°'),
+              const SizedBox(height: 36),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Back to Dashboard'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
