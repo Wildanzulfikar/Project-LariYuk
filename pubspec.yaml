@@ -1,3 +1,4 @@
+# File: pubspec.yaml
 name: lari_yuk
 description: "A new Flutter project."
 
@@ -12,17 +13,25 @@ dependencies:
   flutter:
     sdk: flutter
   google_fonts: ^6.2.1
+  fl_chart: ^0.68.0
   cupertino_icons: ^1.0.8
   firebase_core: ^3.13.1
   firebase_auth: ^5.5.4
+  cloud_firestore: ^5.6.8
+  firebase_database: ^11.1.0
+  firebase_storage: ^12.4.6
   google_sign_in: ^6.3.0
+  image_picker: ^1.0.4
   http: ^1.4.0
-  fl_chart: ^0.68.0
   latlong2: ^0.9.1
   flutter_map: ^8.1.1
   geolocator: ^14.0.1
   geocoding: ^4.0.0
-  cloud_firestore: ^5.6.8
+  screenshot: ^3.0.0
+  share_plus: ^11.0.0
+  google_maps_flutter: ^2.12.2
+  connectivity_plus: ^5.0.2
+
 
 dev_dependencies:
   flutter_test:
@@ -33,13 +42,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/logo.png
-    - assets/images/track1.png
-    - assets/images/track2.png
-    - assets/images/track3.jpg
-    - assets/google.jpg
+    - assets/
+    - assets/images/
 
-  # To add assets to your application, add an assets section, like this:  
+  # To add assets to your application, add an assets section, like this:
 
   # To add assets to your application, add an assets section, like this:
 

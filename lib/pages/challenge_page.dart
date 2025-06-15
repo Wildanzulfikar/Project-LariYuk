@@ -239,7 +239,7 @@ class ChallengePage extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
+        bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: Color(0xffFF6A00),
@@ -255,16 +255,23 @@ class ChallengePage extends StatelessWidget {
         ),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'), // Moved Start to index 1
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_run),
             label: 'Challenge',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          ), // Moved Challenge to index 2
+          // Removed Profile item
         ],
-        currentIndex: 1, // Ubah ke 1 untuk menandai Challenge aktif
+        currentIndex: 2, // Updated index to 2 for Challenge
         onTap: (index) {
-          // Tambahkan navigasi jika diperlukan
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          } else if (index == 1) { // Updated index for Start
+            Navigator.pushReplacementNamed(context, '/running-start');
+          } else if (index == 2) { // Updated index for Challenge
+            Navigator.pushReplacementNamed(context, '/challenge');
+          }
+          // Removed logic for index 3 (Profile)
         },
       ),
     );
@@ -300,7 +307,7 @@ class _ChallengeCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             SizedBox(
-              width: 100, 
+              width: 100,
               child: Text(
                 '"Lari Jauh, Lebih Kuat Setiap Hari" – Personal Marathon ...',
                 maxLines: 2,

@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:lari_yuk/pages/ProfilePage.dart';
 import 'package:lari_yuk/pages/notification_page.dart';
 import 'package:lari_yuk/services/firestore_service.dart';
+import 'package:lari_yuk/pages/ProfilePage.dart'; // Import ProfilePage
+
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -37,6 +39,11 @@ class _DashboardPageState extends State<DashboardPage> {
     _fetchTodayRunData();
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> _getUserName() async {
     User? user = FirebaseAuth.instance.currentUser;
     print("USERLOGIN: ${user}");
@@ -52,6 +59,7 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() => isLoading = true);
     try {
       todayRunData = await _firestoreService.getTodayRunningData();
+      print("RUNNING DATA: $todayRunData");
     } catch (e) {
       print('Error fetching today\'s run data: $e');
       ScaffoldMessenger.of(
@@ -193,12 +201,32 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundImage:
-                            profileImageUrl != null
-                                ? NetworkImage(profileImageUrl!)
-                                : AssetImage('assets/photomoki.png'),
+                      // MODIFIED: Added onTap to navigate to ProfilePage with slide animation
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (context, animation, secondaryAnimation) => ProfilePage(),
+                              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                const begin = Offset(-1.0, 0.0); // Start from left
+                                const end = Offset(0.0, 0.0); // End at center
+                                const curve = Curves.ease;
+
+                                var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+                                return SlideTransition(
+                                  position: animation.drive(tween),
+                                  child: child,
+                                );
+                              },
+                            ),
+                          );
+                        },
+                        child: CircleAvatar(
+                          radius: 24,
+                          backgroundImage: profileImageUrl != null ? NetworkImage(profileImageUrl!) : AssetImage('assets/photomoki.png'),
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Column(
@@ -576,15 +604,23 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'), // Moved Start to index 1
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_run),
             label: 'Challenge',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          ), // Moved Challenge to index 2
+          // Removed Profile item
         ],
         currentIndex: currentIndex,
         onTap: (index) {
+          if (index == 0) {
+            // Stay on Dashboard
+          } else if (index == 1) { // Updated index for Start
+            Navigator.pushReplacementNamed(context, '/running-track');
+          } else if (index == 2) { // Updated index for Challenge
+            Navigator.pushReplacementNamed(context, '/challenge');
+          }
+          // Removed logic for index 3 (Profile)
           setState(() {
             currentIndex = index;
           });
