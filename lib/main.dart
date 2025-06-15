@@ -11,7 +11,9 @@ import 'package:lari_yuk/pages/register_page.dart'; // Import RegisterPage
 import 'package:lari_yuk/pages/detailChallenge_page.dart'; // Import DetailChallengePage
 import 'package:lari_yuk/pages/notification_page.dart'; // Import NotificationPage
 import 'package:lari_yuk/pages/detail_page.dart'; // Import DetailPage
-import 'package:lari_yuk/pages/ProfilePage.dart'; // Import ProfilePage
+import 'package:lari_yuk/pages/ProfilePage.dart';
+import 'package:lari_yuk/pages/RunningHistoryPage.dart';
+import 'package:intl/date_symbol_data_local.dart'; // Import ProfilePage
 
 
 void main() async {
@@ -19,6 +21,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await initializeDateFormatting('id', null);
   runApp(const MyApp());
 }
 
@@ -46,7 +49,8 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => ProfilePage(), // Define Profile route
         '/notification': (context) => NotificationPage(), // Define Notification route
         '/detail': (context) => DetailPage(), // Define Detail route
-        '/running-track' : (context) => RunningTrackPage()
+        '/running-track' : (context) => RunningTrackPage(),
+        '/history' : (context) => RunningHistoryPage()
       },
     );
   }

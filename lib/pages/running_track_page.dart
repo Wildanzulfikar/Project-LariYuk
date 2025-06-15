@@ -105,7 +105,7 @@ class _RunningTrackPageState extends State<RunningTrackPage> {
 
     const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 10,
+      distanceFilter: 1,
     );
 
     _positionStreamSubscription = Geolocator.getPositionStream(
@@ -182,7 +182,7 @@ class _RunningTrackPageState extends State<RunningTrackPage> {
   _isTracking = false;
   _isPaused = false;
 
-  if (_totalDistance < 0) {
+  if (_totalDistance < 100) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Jarak terlalu pendek untuk disimpan.')),
     );
@@ -452,7 +452,7 @@ class _SummaryPageState extends State<SummaryPage> with SingleTickerProviderStat
               _statRow(icon: Icons.thermostat, label: 'Temperature', value: '${widget.temperature}°'),
               const SizedBox(height: 36),
               ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pushReplacementNamed(context, '/dashboard'),
                 child: const Text('Back to Dashboard'),
               ),
             ],

@@ -606,7 +606,7 @@ class _DashboardPageState extends State<DashboardPage> {
           BottomNavigationBarItem(icon: Icon(Icons.play_arrow), label: 'Start'), // Moved Start to index 1
           BottomNavigationBarItem(
             icon: Icon(Icons.directions_run),
-            label: 'Challenge',
+            label: 'History',
           ), // Moved Challenge to index 2
           // Removed Profile item
         ],
@@ -617,7 +617,7 @@ class _DashboardPageState extends State<DashboardPage> {
           } else if (index == 1) { // Updated index for Start
             Navigator.pushReplacementNamed(context, '/running-track');
           } else if (index == 2) { // Updated index for Challenge
-            Navigator.pushReplacementNamed(context, '/challenge');
+            Navigator.pushReplacementNamed(context, '/history');
           }
           // Removed logic for index 3 (Profile)
         },
