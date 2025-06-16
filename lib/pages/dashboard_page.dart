@@ -10,6 +10,8 @@ import 'package:lari_yuk/pages/ProfilePage.dart';
 import 'package:lari_yuk/pages/notification_page.dart';
 import 'package:lari_yuk/services/firestore_service.dart';
 import 'package:lari_yuk/pages/ProfilePage.dart'; // Import ProfilePage
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 
 class DashboardPage extends StatefulWidget {
@@ -37,6 +39,15 @@ class _DashboardPageState extends State<DashboardPage> {
     _getUserName();
     fetchWeather();
     _fetchTodayRunData();
+    checkUserStatus();
+  }
+
+  void checkUserStatus() async {
+  final uid = FirebaseAuth.instance.currentUser!.uid;
+  final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  if (doc.exists && doc.data()?['is_new'] == true) {
+    Navigator.pushReplacementNamed(context, '/tutorial');
+    }
   }
 
   @override
