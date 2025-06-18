@@ -32,6 +32,7 @@ class FirestoreService {
           'points': 0,
           'totalRuns': 0,
           'totalDistance': 0.0,
+          'is_new': true,
           'createdAt': Timestamp.now(),
         });
 

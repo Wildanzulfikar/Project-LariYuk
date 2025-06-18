@@ -93,7 +93,16 @@ class _DashboardPageState extends State<DashboardPage> {
     fetchWeather();
     _fetchTodayRunData();
     _fetchTodaySteps();
-    _fetchTodayCalories(); // Tambahkan ini
+    _fetchTodayCalories(); 
+    checkUserStatus();// Tambahkan ini
+  }
+
+  void checkUserStatus() async {
+  final uid = FirebaseAuth.instance.currentUser!.uid;
+  final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  if (doc.exists && doc.data()?['is_new'] == true) {
+    Navigator.pushReplacementNamed(context, '/tutorial');
+    }
   }
 
   @override

@@ -31,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'images/logo.png',
+              'assets/images/logo.png',
               height: 90,
               width: 90,
               errorBuilder: (context, error, stackTrace) {
@@ -68,9 +68,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   final List<String> _imageAssets = [
-    'images/track1.png',
-    'images/track2.png',
-    'images/track3.jpg',
+    'assets/images/track1.png',
+    'assets/images/track2.png',
+    'assets/images/track3.png',
   ];
 
   @override
