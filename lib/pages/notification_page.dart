@@ -1,8 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class NotificationPage extends StatelessWidget {
+class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
+
+  @override
+  State<NotificationPage> createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+  List<String> notifications = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadNotifications();
+  }
+
+  Future<void> loadNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      notifications = prefs.getStringList('notifications') ?? [];
+    });
+  }
+
+  Future<void> clearNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('notifications');
+    setState(() {
+      notifications.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,27 +47,33 @@ class NotificationPage extends StatelessWidget {
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black),
         elevation: 1,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _notificationTile(
-            icon: Icons.directions_run,
-            title: 'Challenge Baru Tersedia!',
-            subtitle: 'Selesaikan 5 sprint hari ini untuk bonus XP!',
-          ),
-          _notificationTile(
-            icon: Icons.local_fire_department,
-            title: 'Kalori Tercapai 🎉',
-            subtitle: 'Kamu telah membakar 150 kalori hari ini!',
-          ),
-          _notificationTile(
-            icon: Icons.cloud,
-            title: 'Update Cuaca',
-            subtitle: 'Hari ini cerah berawan. Cocok untuk lari pagi.',
-          ),
+        actions: [
+          if (notifications.isNotEmpty)
+            IconButton(
+              icon: Icon(Icons.delete, color: Colors.red),
+              tooltip: 'Clear Notifikasi',
+              onPressed: () async {
+                await clearNotifications();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Semua notifikasi dihapus!')),
+                );
+              },
+            ),
         ],
       ),
+      body: notifications.isEmpty
+          ? Center(child: Text('Belum ada notifikasi'))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: notifications.length,
+              itemBuilder: (context, index) {
+                return _notificationTile(
+                  icon: Icons.check_circle,
+                  title: 'Challenge Selesai!',
+                  subtitle: notifications[index],
+                );
+              },
+            ),
     );
   }
 
