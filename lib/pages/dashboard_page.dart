@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +11,8 @@ import 'package:lari_yuk/pages/ProfilePage.dart';
 import 'package:lari_yuk/pages/notification_page.dart';
 import 'package:lari_yuk/services/firestore_service.dart';
 import 'package:lari_yuk/pages/ProfilePage.dart'; // Import ProfilePage
-
+import 'package:intl/intl.dart'; // Tambahkan ini
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -31,12 +33,67 @@ class _DashboardPageState extends State<DashboardPage> {
   final FirestoreService _firestoreService = FirestoreService();
   Map<String, dynamic>? todayRunData;
 
+  int todaySteps = 0;
+  bool isLoadingSteps = true;
+
+  int todayCalories = 0;
+  bool isLoadingCalories = true;
+
+  Future<void> setChallengeDoneToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now();
+    final todayStr = "${today.year}-${today.month}-${today.day}";
+    await prefs.setString('challenge_done_date', todayStr);
+  }
+
+  Future<bool> isChallengeDoneToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now();
+    final todayStr = "${today.year}-${today.month}-${today.day}";
+    final doneDate = prefs.getString('challenge_done_date');
+    return doneDate == todayStr;
+  }
+
+  // List challenge lokal (bisa kamu tambah sendiri)
+  final List<Map<String, String>> dailyChallenges = [
+    {
+      "title": "Lari 2 km",
+      "description": "Selesaikan lari sejauh 2 kilometer hari ini!"
+    },
+    {
+      "title": "Jalan 5000 langkah",
+      "description": "Jalan kaki minimal 5000 langkah hari ini!"
+    },
+    {
+      "title": "Lari 15 menit",
+      "description": "Lari selama minimal 15 menit tanpa berhenti!"
+    },
+    {
+      "title": "Jalan pagi",
+      "description": "Jalan kaki di pagi hari minimal 1 km."
+    },
+    {
+      "title": "Lari sore",
+      "description": "Lari santai di sore hari selama 20 menit."
+    },
+  ];
+
+  Map<String, String> getTodayChallenge() {
+    final startDate = DateTime(2024, 1, 1); // tanggal mulai challenge
+    final today = DateTime.now();
+    final diff = today.difference(startDate).inDays;
+    final idx = diff % dailyChallenges.length;
+    return dailyChallenges[idx];
+  }
+
   @override
   void initState() {
     super.initState();
     _getUserName();
     fetchWeather();
     _fetchTodayRunData();
+    _fetchTodaySteps();
+    _fetchTodayCalories(); // Tambahkan ini
   }
 
   @override
@@ -68,6 +125,50 @@ class _DashboardPageState extends State<DashboardPage> {
     } finally {
       setState(() => isLoading = false);
     }
+  }
+
+  Future<void> _fetchTodaySteps() async {
+    final steps = await getTodayStepsFromHistory();
+    setState(() {
+      todaySteps = steps;
+      isLoadingSteps = false;
+    });
+  }
+
+  Future<void> _fetchTodayCalories() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('running_history')
+        .where('status', isEqualTo: 'completed')
+        .get();
+
+    int totalCalories = 0;
+    for (var doc in snapshot.docs) {
+      final ts = doc['date'];
+      DateTime docDate;
+      if (ts is Timestamp) {
+        docDate = ts.toDate();
+      } else if (ts is DateTime) {
+        docDate = ts;
+      } else {
+        docDate = DateTime.tryParse(ts.toString()) ?? today;
+      }
+      if (docDate.year == today.year &&
+          docDate.month == today.month &&
+          docDate.day == today.day) {
+        totalCalories += (doc['calories'] ?? 0) as int;
+      }
+    }
+    setState(() {
+      todayCalories = totalCalories;
+      isLoadingCalories = false;
+    });
   }
 
   // Ambil Lokasi Terkini
@@ -185,7 +286,19 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  // Tambahkan fungsi ini:
+  Future<void> addNotification(String notif) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> notifs = prefs.getStringList('notifications') ?? [];
+    notifs.insert(0, notif); // tambah di awal
+    await prefs.setStringList('notifications', notifs);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Daily Challenge Card (tanpa Firestore, otomatis update tiap hari)
+    final todayChallenge = getTodayChallenge();
+
     return Scaffold(
       backgroundColor: Colors.grey[200],
       resizeToAvoidBottomInset: false,
@@ -270,109 +383,140 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: 24),
 
-              // Daily Challenge Card
-              Card(
-                color: const Color(0xffFF6A00),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: const [
-                              Icon(
-                                Icons.directions_run,
+              // Daily Challenge Card (DYNAMIC)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: FutureBuilder<bool>(
+                  future: isChallengeDoneToday(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return SizedBox(
+                        height: 140,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (snapshot.data == true) {
+                      return Card(
+                        color: const Color(0xffFF6A00),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Center(
+                            child: Text(
+                              'Tidak ada daily challenge hari ini.',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 16,
                                 color: Colors.white,
-                                size: 30,
                               ),
-                              SizedBox(width: 8),
-                            ],
-                          ),
-                          Text(
-                            'Daily Challenge',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 20,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          IconButton(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder:
-                                    (context) => AlertDialog(
-                                      title: Text("Dismiss Challenge"),
-                                      content: Text(
-                                        "Kartu challenge disembunyikan.",
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed:
-                                              () => Navigator.pop(context),
-                                          child: Text("OK"),
-                                        ),
-                                      ],
-                                    ),
-                              );
-                            },
-                            icon: const Icon(Icons.close),
-                            color: Colors.white,
-                            iconSize: 24,
-                            tooltip: 'Dismiss',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Sprint for 30 seconds. Repeat this\ninterval 5 times',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w400,
                         ),
+                      );
+                    }
+                    final todayChallenge = getTodayChallenge();
+                    return Card(
+                      color: const Color(0xffFF6A00),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      const SizedBox(height: 20),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "Good job! Kamu menyelesaikan challenge",
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: const [
+                                    Icon(
+                                      Icons.directions_run,
+                                      color: Colors.white,
+                                      size: 30,
+                                    ),
+                                    SizedBox(width: 8),
+                                  ],
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    todayChallenge['title'] ?? 'Daily Challenge',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 20,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis, // Agar tidak overflow
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {},
+                                  icon: const Icon(Icons.close),
+                                  color: Colors.white,
+                                  iconSize: 24,
+                                  tooltip: 'Dismiss',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              todayChallenge['description'] ?? '',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text("Good job! Kamu menyelesaikan challenge"),
+                                      duration: Duration(seconds: 1),
+                                    ),
+                                  );
+                                  await addNotification("Good job! Kamu menyelesaikan challenge");
+                                  await setChallengeDoneToday();
+                                  setState(() {}); // <-- ini WAJIB agar card langsung update!
+                                  Future.delayed(const Duration(seconds: 1), () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const NotificationPage(),
+                                      ),
+                                    );
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Done',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
                                 ),
                               ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
                             ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                          ),
-                          child: Text(
-                            'Done',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 24),
@@ -440,27 +584,29 @@ class _DashboardPageState extends State<DashboardPage> {
                               size: 40,
                             ),
                             const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isLoading
-                                      ? 'Loading...'
-                                      : (todayRunData?['steps']?.toString() ?? '0'),
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                            Expanded( // Tambahkan Expanded di sini
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isLoadingSteps
+                                        ? 'Loading...'
+                                        : todaySteps.toString(),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  'Steps',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 14,
-                                    color: Colors.white70,
+                                  Text(
+                                    'Steps',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      color: Colors.white70,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -488,27 +634,29 @@ class _DashboardPageState extends State<DashboardPage> {
                               size: 40,
                             ),
                             const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                   isLoading
-                                      ? 'Loading...'
-                                      : (todayRunData?['calories']?.toString() ?? '0'),
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                            Expanded( // Tambahkan Expanded di sini
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isLoadingCalories
+                                        ? 'Loading...'
+                                        : todayCalories.toString(),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  'Kalori',
-                                  style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 14,
-                                    color: Colors.white70,
+                                  Text(
+                                    'Kalori',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      color: Colors.white70,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -625,4 +773,100 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+}
+
+Future<void> saveSteps(int steps) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+  final today = DateTime.now();
+  final dateStr = "${today.year}-${today.month}-${today.day}";
+  await FirebaseFirestore.instance
+      .collection('user_steps')
+      .doc(user.uid)
+      .set({
+        'date': dateStr,
+        'steps': steps,
+      }, SetOptions(merge: true));
+}
+
+Future<int> getTodaySteps() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return 0;
+  final doc = await FirebaseFirestore.instance
+      .collection('user_steps')
+      .doc(user.uid)
+      .get();
+  if (!doc.exists) return 0;
+  final today = DateTime.now();
+  final dateStr = "${today.year}-${today.month}-${today.day}";
+  if (doc['date'] == dateStr) {
+    return doc['steps'] ?? 0;
+  }
+  return 0;
+}
+
+Future<int> getTodayStepsFromHistory() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return 0;
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+
+  final snapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('running_history')
+      .where('status', isEqualTo: 'completed')
+      .get();
+
+  int totalSteps = 0;
+  for (var doc in snapshot.docs) {
+    final ts = doc['date'];
+    DateTime docDate;
+    if (ts is Timestamp) {
+      docDate = ts.toDate();
+    } else if (ts is DateTime) {
+      docDate = ts;
+    } else {
+      docDate = DateTime.tryParse(ts.toString()) ?? today;
+    }
+    if (docDate.year == today.year &&
+        docDate.month == today.month &&
+        docDate.day == today.day) {
+      totalSteps += (doc['steps'] ?? 0) as int;
+    }
+  }
+  return totalSteps;
+}
+
+Future<int> getTodayCaloriesFromHistory() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return 0;
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+
+  final snapshot = await FirebaseFirestore.instance
+      .collection('users')
+      .doc(user.uid)
+      .collection('running_history')
+      .where('status', isEqualTo: 'completed')
+      .get();
+
+  int totalCalories = 0;
+  for (var doc in snapshot.docs) {
+    final ts = doc['date'];
+    DateTime docDate;
+    if (ts is Timestamp) {
+      docDate = ts.toDate();
+    } else if (ts is DateTime) {
+      docDate = ts;
+    } else {
+      docDate = DateTime.tryParse(ts.toString()) ?? today;
+    }
+    if (docDate.year == today.year &&
+        docDate.month == today.month &&
+        docDate.day == today.day) {
+      totalCalories += (doc['calories'] ?? 0) as int;
+    }
+  }
+  return totalCalories;
 }

@@ -33,6 +33,7 @@ dependencies:
   connectivity_plus: ^5.0.2
   intl: ^0.20.2
   table_calendar: ^3.2.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
