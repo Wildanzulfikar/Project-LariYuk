@@ -269,7 +269,13 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
 
               const SizedBox(height: 16),
-            
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _infoCard(Icons.emoji_events, 'Challange Cleared', '10'),
+                  _infoCard(Icons.flag, 'Session Finished', '10'),
+                ],
+              ),
             ],
           ),
         ),

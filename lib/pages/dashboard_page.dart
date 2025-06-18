@@ -777,7 +777,6 @@ class _DashboardPageState extends State<DashboardPage> {
           } else if (index == 2) { // Updated index for Challenge
             Navigator.pushReplacementNamed(context, '/history');
           }
-          // Removed logic for index 3 (Profile)
         },
       ),
     );
