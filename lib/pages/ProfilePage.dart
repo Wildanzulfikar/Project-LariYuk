@@ -1,15 +1,12 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:lari_yuk/pages/dashboard_page.dart'; // Import DashboardPage
-
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -20,10 +17,10 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool isEditing = false;
-  String name = 'WILDAN ZULFIKAR';
+  String name = '';
   String location = 'Daerah Khusus Ibukota\nJakarta, Indonesia';
-  String weight = '1000 KG';
-  String height = '1000 CM';
+  String weight = '';
+  String height = '';
   String? profileImageUrl;
 
   final nameController = TextEditingController();
@@ -37,14 +34,17 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    final doc = await FirebaseFirestore.instance.collection('users').doc('user_123').get();
-    final data = doc.data();
-    if (data != null) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Fetch user data from Firestore
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final data = doc.data();
       setState(() {
-        name = data['name'] ?? name;
-        weight = data['weight'] ?? weight;
-        height = data['height'] ?? height;
-        profileImageUrl = data['photoUrl'];
+        name = data?['name'] ?? user.displayName ?? 'Unknown User';
+        // Convert number to string for weight and height
+        weight = data?['weight']?.toString() ?? 'Not Set';
+        height = data?['height']?.toString() ?? 'Not Set';
+        profileImageUrl = data?['avatarUrl'] ?? user.photoURL;
       });
     }
   }
@@ -61,12 +61,20 @@ class _ProfilePageState extends State<ProfilePage> {
       isEditing = false;
     });
 
-    await FirebaseFirestore.instance.collection('users').doc('user_123').set({
-      'name': name,
-      'weight': weight,
-      'height': height,
-      'photoUrl': profileImageUrl,
-    });
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'name': name,
+        'weight': newWeight.isNotEmpty ? num.parse(newWeight) : num.parse(weight), // Convert to number
+        'height': newHeight.isNotEmpty ? num.parse(newHeight) : num.parse(height), // Convert to number
+        'avatarUrl': profileImageUrl,
+      }, SetOptions(merge: true));
+
+      // Update Firebase Auth display name and photo URL if changed
+      if (newName.isNotEmpty && newName != user.displayName) {
+        await user.updateDisplayName(newName);
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -74,11 +82,19 @@ class _ProfilePageState extends State<ProfilePage> {
     final picked = await picker.pickImage(source: ImageSource.gallery);
 
     if (picked != null) {
-      final ref = FirebaseStorage.instance.ref().child('profile_images/${picked.name}');
+      final ref = FirebaseStorage.instance.ref().child('profile_images/${FirebaseAuth.instance.currentUser!.uid}/${picked.name}');
       await ref.putFile(File(picked.path));
       final url = await ref.getDownloadURL();
 
       setState(() => profileImageUrl = url);
+
+      // Update Firestore with new photo URL
+      await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).set({
+        'avatarUrl': url,
+      }, SetOptions(merge: true));
+
+      // Update Firebase Auth photo URL
+      await FirebaseAuth.instance.currentUser!.updatePhotoURL(url);
     }
   }
 
@@ -100,12 +116,11 @@ class _ProfilePageState extends State<ProfilePage> {
               Row(
                 children: [
                   GestureDetector(
-                    // MODIFIED: Navigate to dashboard with slide-out animation
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
                         PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) => DashboardPage(),
+                          pageBuilder: (context, animation, secondaryAnimation) => const DashboardPage(),
                           transitionsBuilder: (context, animation, secondaryAnimation, child) {
                             const begin = Offset(1.0, 0.0); // Start from right
                             const end = Offset(0.0, 0.0); // End at center
@@ -164,52 +179,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold),
                           )
                         : Text(name, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text(location,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(fontSize: 14, color: Colors.grey)),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Column(
-                          children: const [
-                            Text(
-                              'Mengikuti',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            Text(
-                              '1',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 40),
-                        Column(
-                          children: const [
-                            Text(
-                              'Para pengikut',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            Text(
-                              '1',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ],
+                    Text(
+                      location,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(fontSize: 14, color: Colors.grey),
                     ),
                     const SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orange,
-                            side: const BorderSide(color: Colors.orange),
-                          ),
-                          child: const Text('Bagikan kode QR saya'),
-                        ),
                         const SizedBox(width: 10),
                         OutlinedButton(
                           onPressed: () {
@@ -234,13 +213,13 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 24),
               const Text('Berat Badan', style: TextStyle(fontWeight: FontWeight.bold)),
               isEditing
-                  ? TextField(controller: weightController)
-                  : Text(weight, style: const TextStyle(color: Colors.grey)),
+                  ? TextField(controller: weightController, keyboardType: TextInputType.number)
+                  : Text('$weight KG', style: const TextStyle(color: Colors.grey)),
               const Divider(),
               const Text('Tinggi Badan', style: TextStyle(fontWeight: FontWeight.bold)),
               isEditing
-                  ? TextField(controller: heightController)
-                  : Text(height, style: const TextStyle(color: Colors.grey)),
+                  ? TextField(controller: heightController, keyboardType: TextInputType.number)
+                  : Text('$height CM', style: const TextStyle(color: Colors.grey)),
               const Divider(),
 
               const SizedBox(height: 16),
@@ -318,10 +297,10 @@ class _ProfilePageState extends State<ProfilePage> {
             Icon(icon, color: Colors.white, size: 30),
             const SizedBox(height: 8),
             Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Colors.white)),
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white))
+            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
           ],
-          ),
         ),
-      );
-    }
+      ),
+    );
   }
+}
