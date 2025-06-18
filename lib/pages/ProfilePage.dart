@@ -1,12 +1,6 @@
-import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:lari_yuk/pages/dashboard_page.dart'; // Import DashboardPage
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -110,10 +104,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    nameController.text = name;
-    weightController.text = weight;
-    heightController.text = height;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -122,35 +112,18 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
+              // Header with Back Icon and Profile title
               Row(
                 children: [
                   GestureDetector(
-                    // MODIFIED: Navigate to dashboard with slide-out animation
-                    onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder: (context, animation, secondaryAnimation) => DashboardPage(),
-                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                            const begin = Offset(1.0, 0.0); // Start from right
-                            const end = Offset(0.0, 0.0); // End at center
-                            const curve = Curves.ease;
-
-                            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-                            return SlideTransition(
-                              position: animation.drive(tween),
-                              child: child,
-                            );
-                          },
-                        ),
-                      );
-                    },
+                    onTap: () => Navigator.pop(context),
                     child: const Icon(Icons.arrow_back_ios, size: 24),
                   ),
                   const SizedBox(width: 8),
-                  const Text('Profile', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Profile',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -228,25 +201,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(width: 10),
                         OutlinedButton(
-                          onPressed: () {
-                            if (isEditing) {
-                              _saveProfile();
-                            } else {
-                              setState(() => isEditing = true);
-                            }
-                          },
+                          onPressed: () {},
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.orange,
                             side: const BorderSide(color: Colors.orange),
                           ),
-                          child: Text(isEditing ? 'Simpan' : 'Edit'),
+                          child: const Text('Edit'),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 24),
 
               // Berat & Tinggi Badan
@@ -360,6 +326,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
               ),
               const SizedBox(height: 16),
+
+              // Bottom two cards
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -401,8 +369,8 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ],
-          ),
         ),
-      );
-    }
+      ),
+    );
   }
+}
